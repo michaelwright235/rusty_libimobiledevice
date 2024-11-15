@@ -13,7 +13,7 @@ pub struct FileRelay<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl FileRelay<'_> {
+impl<'a> FileRelay<'a> {
     /// Creates a new file relay service from a lockdown service
     /// # Arguments
     /// * `device` - The device to create the sevice with
@@ -22,7 +22,7 @@ impl FileRelay<'_> {
     /// A struct containing the handle to the service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, service: LockdowndService) -> Result<Self, FileRelayError> {
+    pub fn new(device: &'a Device, service: LockdowndService) -> Result<Self, FileRelayError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::file_relay_client_new(device.pointer, service.pointer, &mut pointer)
@@ -48,7 +48,7 @@ impl FileRelay<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: &Device,
+        device: &'a Device,
         label: impl Into<String>,
     ) -> Result<Self, FileRelayError> {
         let mut pointer = std::ptr::null_mut();

@@ -14,7 +14,7 @@ pub struct ScreenshotrClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl ScreenshotrClient<'_> {
+impl<'a> ScreenshotrClient<'a> {
     /// Creates a preboard client from a screenshotr service
     /// # Arguments
     /// * `device` - The device to connect to
@@ -23,7 +23,7 @@ impl ScreenshotrClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, descriptor: LockdowndService) -> Result<Self, ScreenshotrError> {
+    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, ScreenshotrError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::screenshotr_client_new(
@@ -53,7 +53,7 @@ impl ScreenshotrClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: &Device,
+        device: &'a Device,
         label: impl Into<String>,
     ) -> Result<Self, ScreenshotrError> {
         let mut pointer = std::ptr::null_mut();

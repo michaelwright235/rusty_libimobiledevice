@@ -17,7 +17,7 @@ pub struct InstProxyClient<'a> {
 unsafe impl Send for InstProxyClient<'_> {}
 unsafe impl Sync for InstProxyClient<'_> {}
 
-impl InstProxyClient<'_> {
+impl<'a> InstProxyClient<'a> {
     /// Starts a new service with house arrest
     /// # Arguments
     /// * `device` - The device to create the sevice with
@@ -26,7 +26,7 @@ impl InstProxyClient<'_> {
     /// A struct containing the handle to the service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, label: impl Into<String>) -> Result<Self, InstProxyError> {
+    pub fn new(device: &'a Device, label: impl Into<String>) -> Result<Self, InstProxyError> {
         let label: String = label.into();
         let mut instproxy_client = unsafe { std::mem::zeroed() };
         let label_c_string = CString::new(label.clone()).unwrap();

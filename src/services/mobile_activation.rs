@@ -14,7 +14,7 @@ pub struct MobileActivationClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl MobileActivationClient<'_> {
+impl<'a> MobileActivationClient<'a> {
     /// Creates a new mobile activation service connection to the device
     /// The use of this function is unknown
     /// # Arguments
@@ -24,7 +24,7 @@ impl MobileActivationClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn new(
-        device: &Device,
+        device: &'a Device,
         descriptor: LockdowndService,
     ) -> Result<Self, MobileActivationError> {
         let mut client = unsafe { std::mem::zeroed() };
@@ -57,7 +57,7 @@ impl MobileActivationClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: &Device,
+        device: &'a Device,
         label: impl Into<String>,
     ) -> Result<Self, MobileActivationError> {
         let label_c_string = CString::new(label.into()).unwrap();

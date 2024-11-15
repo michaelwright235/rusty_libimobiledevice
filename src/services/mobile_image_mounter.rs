@@ -23,7 +23,7 @@ pub struct MobileImageMounter<'a> {
 unsafe impl Send for MobileImageMounter<'_> {}
 unsafe impl Sync for MobileImageMounter<'_> {}
 
-impl MobileImageMounter<'_> {
+impl<'a> MobileImageMounter<'a> {
     /// Creates a new mobile image mounter service from a lockdown service
     /// # Arguments
     /// * `device` - The device to connect to
@@ -33,7 +33,7 @@ impl MobileImageMounter<'_> {
     ///
     /// ***Verified:*** False
     pub fn new(
-        device: &Device,
+        device: &'a Device,
         descriptor: LockdowndService,
     ) -> Result<Self, MobileImageMounterError> {
         let mut client = unsafe { std::mem::zeroed() };
@@ -66,7 +66,7 @@ impl MobileImageMounter<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: &Device,
+        device: &'a Device,
         label: impl Into<String>,
     ) -> Result<Self, MobileImageMounterError> {
         let mut client = unsafe { std::mem::zeroed() };

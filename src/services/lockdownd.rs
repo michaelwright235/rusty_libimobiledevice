@@ -40,7 +40,7 @@ pub struct LockdowndService<'a> {
 unsafe impl Send for LockdowndService<'_> {}
 unsafe impl Sync for LockdowndService<'_> {}
 
-impl LockdowndClient<'_> {
+impl<'a> LockdowndClient<'a> {
     /// Creates a new lockdown service and starts initial handshake
     /// # Arguments
     /// * `device` - The device to start the service on
@@ -49,7 +49,7 @@ impl LockdowndClient<'_> {
     /// A struct containing the handle to the service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, label: impl Into<String>) -> Result<Self, LockdowndError> {
+    pub fn new(device: &'a Device, label: impl Into<String>) -> Result<Self, LockdowndError> {
         let mut client: unsafe_bindings::lockdownd_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::lockdownd_client_t = &mut client;
 

@@ -16,7 +16,7 @@ pub struct HouseArrest<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl HouseArrest<'_> {
+impl<'a> HouseArrest<'a> {
     /// Creates a new house arrest service from a lockdown service
     /// # Arguments
     /// * `device` - The device to create the sevice with
@@ -25,7 +25,7 @@ impl HouseArrest<'_> {
     /// A struct containing the handle to the service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, service: &LockdowndService) -> Result<Self, HouseArrestError> {
+    pub fn new(device: &'a Device, service: &LockdowndService) -> Result<Self, HouseArrestError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::house_arrest_client_new(device.pointer, service.pointer, &mut pointer)
@@ -51,7 +51,7 @@ impl HouseArrest<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: &Device,
+        device: &'a Device,
         label: impl Into<String>,
     ) -> Result<Self, HouseArrestError> {
         let mut pointer = std::ptr::null_mut();

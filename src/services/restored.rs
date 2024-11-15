@@ -12,7 +12,7 @@ pub struct RestoredClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl RestoredClient<'_> {
+impl<'a> RestoredClient<'a> {
     /// Starts a new connection and adds a restored client to it
     /// # Arguments
     /// * `device` - The device to connect to
@@ -21,7 +21,7 @@ impl RestoredClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, label: impl Into<String>) -> Result<Self, RestoredError> {
+    pub fn new(device: &'a Device, label: impl Into<String>) -> Result<Self, RestoredError> {
         let mut pointer = unsafe { std::mem::zeroed() };
         let label_c_string = CString::new(label.into()).unwrap();
         let result = unsafe {

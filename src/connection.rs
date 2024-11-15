@@ -20,7 +20,7 @@ pub enum DeviceConnectionType {
     Network,
 }
 
-impl DeviceConnection<'_> {
+impl<'a> DeviceConnection<'a> {
     /// Create a connection to an iOS device
     /// This is NOT a lockdown connection, for things like debugging use a specific service
     /// # Arguments
@@ -30,7 +30,7 @@ impl DeviceConnection<'_> {
     /// A handle for the connection
     ///
     /// ***Verified:*** False
-    pub fn connect(device: Device, port: u16) -> Result<Self, IdeviceError> {
+    pub fn connect(device: &'a Device, port: u16) -> Result<Self, IdeviceError> {
         let mut to_fill = unsafe { std::mem::zeroed() };
 
         let result =

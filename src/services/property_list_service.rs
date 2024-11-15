@@ -12,7 +12,7 @@ pub struct PropertyListServiceClient<'a> {
 
 use plist_plus::Plist;
 
-impl PropertyListServiceClient<'_> {
+impl<'a> PropertyListServiceClient<'a> {
     /// Creates a preboard client from a property list service
     /// # Arguments
     /// * `device` - The device to connect to
@@ -22,7 +22,7 @@ impl PropertyListServiceClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn new(
-        device: &Device,
+        device: &'a Device,
         descriptor: LockdowndService,
     ) -> Result<Self, PropertyListServiceError> {
         let mut pointer = std::ptr::null_mut();

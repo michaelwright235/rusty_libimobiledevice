@@ -14,7 +14,7 @@ pub struct MisagentClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl MisagentClient<'_> {
+impl<'a> MisagentClient<'a> {
     /// Creates a new misagent service connection to the device
     /// The use of this function is unknown
     /// # Arguments
@@ -23,7 +23,7 @@ impl MisagentClient<'_> {
     /// The lockdownd service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, descriptor: LockdowndService) -> Result<Self, MisagentError> {
+    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, MisagentError> {
         let mut pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::misagent_client_new(device.pointer, descriptor.pointer, &mut pointer)
@@ -47,7 +47,7 @@ impl MisagentClient<'_> {
     /// An misagent service connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: impl Into<String>) -> Result<Self, MisagentError> {
+    pub fn start_service(device: &'a Device, label: impl Into<String>) -> Result<Self, MisagentError> {
         let mut pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::misagent_client_start_service(

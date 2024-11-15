@@ -16,7 +16,7 @@ pub struct DiagnosticsRelay<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl DiagnosticsRelay<'_> {
+impl<'a> DiagnosticsRelay<'a> {
     /// Creates a new diagnostics relay service from a lockdown service
     /// # Arguments
     /// * `device` - The device to create the sevice with
@@ -25,7 +25,7 @@ impl DiagnosticsRelay<'_> {
     /// A struct containing the handle to the service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, service: LockdowndService) -> Result<Self, DiagnosticsRelayError> {
+    pub fn new(device: &'a Device, service: LockdowndService) -> Result<Self, DiagnosticsRelayError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_client_new(
@@ -55,7 +55,7 @@ impl DiagnosticsRelay<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: &Device,
+        device: &'a Device,
         label: impl Into<String>,
     ) -> Result<Self, DiagnosticsRelayError> {
         let mut pointer = std::ptr::null_mut();

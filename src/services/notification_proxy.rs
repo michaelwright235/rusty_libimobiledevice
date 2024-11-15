@@ -13,7 +13,7 @@ pub struct NotificationProxyClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl NotificationProxyClient<'_> {
+impl<'a> NotificationProxyClient<'a> {
     /// Creates a new notification proxy from a lockdown service
     /// # Arguments
     /// * `device` - The device to connect to
@@ -22,7 +22,7 @@ impl NotificationProxyClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, descriptor: LockdowndService) -> Result<Self, NpError> {
+    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, NpError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::np_client_new(device.pointer, descriptor.pointer, &mut pointer)
@@ -47,7 +47,7 @@ impl NotificationProxyClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: impl Into<String>) -> Result<Self, NpError> {
+    pub fn start_service(device: &'a Device, label: impl Into<String>) -> Result<Self, NpError> {
         let label_c_string = CString::new(label.into()).unwrap();
 
         let mut pointer = std::ptr::null_mut();

@@ -27,7 +27,7 @@ pub struct MobileBackup2Client<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl MobileBackupClient<'_> {
+impl<'a> MobileBackupClient<'a> {
     /// Creates a new mobile backup service connection to the device
     /// The use of this function is unknown
     /// # Arguments
@@ -36,7 +36,7 @@ impl MobileBackupClient<'_> {
     /// The lockdownd service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, service: LockdowndService) -> Result<Self, MobileBackupError> {
+    pub fn new(device: &'a Device, service: LockdowndService) -> Result<Self, MobileBackupError> {
         let mut client = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
@@ -63,7 +63,7 @@ impl MobileBackupClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: &Device,
+        device: &'a Device,
         label: impl Into<String>,
     ) -> Result<Self, MobileBackupError> {
         let mut client = unsafe { std::mem::zeroed() };
@@ -301,7 +301,7 @@ impl MobileBackupClient<'_> {
     }
 }
 
-impl MobileBackup2Client<'_> {
+impl<'a> MobileBackup2Client<'a> {
     /// Creates a new mobile backup service connection to the device
     /// The use of this function is unknown
     /// # Arguments
@@ -310,7 +310,7 @@ impl MobileBackup2Client<'_> {
     /// The lockdownd service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, service: LockdowndService) -> Result<Self, MobileBackup2Error> {
+    pub fn new(device: &'a Device, service: LockdowndService) -> Result<Self, MobileBackup2Error> {
         let mut client = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
@@ -337,7 +337,7 @@ impl MobileBackup2Client<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: &Device,
+        device: &'a Device,
         label: impl Into<String>,
     ) -> Result<Self, MobileBackup2Error> {
         let mut client = unsafe { std::mem::zeroed() };

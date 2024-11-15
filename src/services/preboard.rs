@@ -16,7 +16,7 @@ pub struct PreboardClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl PreboardClient<'_> {
+impl<'a> PreboardClient<'a> {
     /// Creates a preboard client from a lockdown service
     /// # Arguments
     /// * `device` - The device to connect to
@@ -25,7 +25,7 @@ impl PreboardClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, descriptor: LockdowndService) -> Result<Self, PreboardError> {
+    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, PreboardError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::preboard_client_new(device.pointer, descriptor.pointer, &mut pointer)
@@ -50,7 +50,7 @@ impl PreboardClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: impl Into<String>) -> Result<Self, PreboardError> {
+    pub fn start_service(device: &'a Device, label: impl Into<String>) -> Result<Self, PreboardError> {
         let mut pointer = std::ptr::null_mut();
         let label_c_string = CString::new(label.into()).unwrap();
         let result = unsafe {

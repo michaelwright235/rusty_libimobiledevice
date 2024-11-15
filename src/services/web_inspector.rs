@@ -15,7 +15,7 @@ pub struct WebInspectorClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl WebInspectorClient<'_> {
+impl<'a> WebInspectorClient<'a> {
     /// Creates a preboard client from a web inspector service
     /// # Arguments
     /// * `device` - The device to connect to
@@ -24,7 +24,7 @@ impl WebInspectorClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, descriptor: LockdowndService) -> Result<Self, WebInspectorError> {
+    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, WebInspectorError> {
         let mut pointer = std::ptr::null_mut();
 
         let result = unsafe {
@@ -55,7 +55,7 @@ impl WebInspectorClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: &Device,
+        device: &'a Device,
         label: impl Into<String>,
     ) -> Result<Self, WebInspectorError> {
         let mut pointer = std::ptr::null_mut();

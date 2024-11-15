@@ -15,7 +15,7 @@ pub struct CompanionProxy<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl CompanionProxy<'_> {
+impl<'a> CompanionProxy<'a> {
     /// Creates a new companion proxy from a lockdown connection
     /// # Arguments
     /// * `device` - The device of which to connect to
@@ -24,7 +24,7 @@ impl CompanionProxy<'_> {
     /// A companion proxy struct
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, descriptor: LockdowndService) -> Result<Self, CompanionProxyError> {
+    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, CompanionProxyError> {
         let mut pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::companion_proxy_client_new(
@@ -53,7 +53,7 @@ impl CompanionProxy<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: &Device,
+        device: &'a Device,
         label: impl Into<String>,
     ) -> Result<Self, CompanionProxyError> {
         let label_c_string = CString::new(label.into()).unwrap();

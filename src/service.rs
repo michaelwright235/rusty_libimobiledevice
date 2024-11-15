@@ -11,7 +11,7 @@ pub struct ServiceClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl ServiceClient<'_> {
+impl<'a> ServiceClient<'a> {
     /// Creates a new service on the device
     /// This is useful for services that don't have abstractions and need to be handled manually
     /// # Arguments
@@ -19,7 +19,7 @@ impl ServiceClient<'_> {
     /// * `descriptor` - The lockdown service to jump off of
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, descriptor: LockdowndService) -> Result<Self, ServiceError> {
+    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, ServiceError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::service_client_new(device.pointer, descriptor.pointer, &mut pointer)
@@ -44,7 +44,7 @@ impl ServiceClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn factory_start_service(
-        device: &Device,
+        device: &'a Device,
         service_name: impl Into<String>,
         label: impl Into<String>,
     ) -> Result<(Self, i32), ServiceError> {

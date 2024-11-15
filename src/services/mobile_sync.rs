@@ -24,7 +24,7 @@ pub struct MobileSyncAnchor {
     computer_anchor: CString,
 }
 
-impl MobileSyncClient<'_> {
+impl<'a> MobileSyncClient<'a> {
     /// Creates a new mobile sync service from a lockdown service
     /// # Arguments
     /// * `device` - The device to connect to
@@ -33,7 +33,7 @@ impl MobileSyncClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: Device, descriptor: LockdowndService) -> Result<Self, MobileSyncError> {
+    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, MobileSyncError> {
         let mut pointer: unsafe_bindings::mobilesync_client_t = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::mobilesync_client_new(device.pointer, descriptor.pointer, &mut pointer)
@@ -59,7 +59,7 @@ impl MobileSyncClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: Device,
+        device: &'a Device,
         label: impl Into<String>,
     ) -> Result<Self, MobileSyncError> {
         let label_c_string = CString::new(label.into()).unwrap();

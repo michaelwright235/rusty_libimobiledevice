@@ -18,7 +18,7 @@ pub struct SpringboardServicesClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl SpringboardServicesClient<'_> {
+impl<'a> SpringboardServicesClient<'a> {
     /// Creates a preboard client from a springboard service
     /// # Arguments
     /// * `device` - The device to connect to
@@ -27,7 +27,7 @@ impl SpringboardServicesClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, descriptor: LockdowndService) -> Result<Self, SbservicesError> {
+    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, SbservicesError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::sbservices_client_new(device.pointer, descriptor.pointer, &mut pointer)
@@ -53,7 +53,7 @@ impl SpringboardServicesClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: &Device,
+        device: &'a Device,
         label: impl Into<String>,
     ) -> Result<Self, SbservicesError> {
         let mut pointer = std::ptr::null_mut();

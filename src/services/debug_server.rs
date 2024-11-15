@@ -26,7 +26,7 @@ pub struct DebugServerCommand {
 unsafe impl Send for DebugServerCommand {}
 unsafe impl Sync for DebugServerCommand {}
 
-impl DebugServer<'_> {
+impl<'a> DebugServer<'a> {
     /// Starts a new debug server on the device
     /// # Arguments
     /// * `device` - The device to start the debug server on
@@ -35,7 +35,7 @@ impl DebugServer<'_> {
     /// A debug server struct
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, label: &str) -> Result<Self, DebugServerError> {
+    pub fn new(device: &'a Device, label: &str) -> Result<Self, DebugServerError> {
         let mut client: unsafe_bindings::debugserver_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::debugserver_client_t = &mut client;
 

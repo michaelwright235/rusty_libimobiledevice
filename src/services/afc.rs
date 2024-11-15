@@ -20,7 +20,7 @@ pub struct AfcClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
-impl AfcClient<'_> {
+impl<'a> AfcClient<'a> {
     /// Creates a new afc service connection to the device
     /// The use of this function is unknown
     /// # Arguments
@@ -29,7 +29,7 @@ impl AfcClient<'_> {
     /// The lockdownd service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device) -> Result<(Self, LockdowndService), String> {
+    pub fn new(device: &'a Device) -> Result<(Self, LockdowndService), String> {
         let mut pointer = unsafe { std::mem::zeroed() };
         let mut client_pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
@@ -59,7 +59,7 @@ impl AfcClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn with_service(device: &Device, descriptor: LockdowndService) -> Result<Self, String> {
+    pub fn with_service(device: &'a Device, descriptor: &LockdowndService) -> Result<Self, String> {
         let mut client_pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::afc_client_new(device.pointer, descriptor.pointer, &mut client_pointer)
@@ -82,7 +82,7 @@ impl AfcClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        device: &Device,
+        device: &'a Device,
         service_name: impl Into<String>,
     ) -> Result<Self, AfcError> {
         let service_name_c_string = CString::new(service_name.into()).unwrap();
@@ -563,10 +563,10 @@ impl AfcClient<'_> {
     }
 }
 
-impl TryFrom<HouseArrest<'_>> for AfcClient<'_> {
+impl<'a> TryFrom<HouseArrest<'a>> for AfcClient<'a> {
     type Error = AfcError;
 
-    fn try_from(house_arrest: HouseArrest<'_>) -> Result<Self, Self::Error> {
+    fn try_from(house_arrest: HouseArrest<'a>) -> Result<Self, Self::Error> {
         let mut to_fill = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::afc_client_new_from_house_arrest_client(
