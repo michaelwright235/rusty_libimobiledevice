@@ -82,7 +82,7 @@ impl<'a> HouseArrest<'a> {
     /// A plist containing the result of the request
     ///
     /// ***Verified:*** False
-    pub fn send_request(&self, request: Plist) -> Result<Plist, HouseArrestError> {
+    pub fn send_request(&self, request: &Plist) -> Result<Plist, HouseArrestError> {
         let result = unsafe {
             unsafe_bindings::house_arrest_send_request(self.pointer, request.get_pointer())
         }

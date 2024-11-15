@@ -34,7 +34,7 @@ impl<'a> MobileImageMounter<'a> {
     /// ***Verified:*** False
     pub fn new(
         device: &'a Device,
-        descriptor: LockdowndService,
+        descriptor: &LockdowndService,
     ) -> Result<Self, MobileImageMounterError> {
         let mut client = unsafe { std::mem::zeroed() };
 

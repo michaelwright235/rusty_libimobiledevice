@@ -24,7 +24,7 @@ impl<'a> CompanionProxy<'a> {
     /// A companion proxy struct
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, CompanionProxyError> {
+    pub fn new(device: &'a Device, descriptor: &LockdowndService) -> Result<Self, CompanionProxyError> {
         let mut pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::companion_proxy_client_new(
@@ -84,7 +84,7 @@ impl<'a> CompanionProxy<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, message: Plist) -> Result<(), CompanionProxyError> {
+    pub fn send(&self, message: &Plist) -> Result<(), CompanionProxyError> {
         let result =
             unsafe { unsafe_bindings::companion_proxy_send(self.pointer, message.get_pointer()) }
                 .into();
@@ -178,7 +178,7 @@ impl<'a> CompanionProxy<'a> {
         &self,
         port: u16,
         service_name: impl Into<String>,
-        options: Plist,
+        options: &Plist,
     ) -> Result<u16, CompanionProxyError> {
         let mut result_port = 0;
         let service_name_c_string = CString::new(service_name.into()).unwrap();

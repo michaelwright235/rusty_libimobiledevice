@@ -22,7 +22,7 @@ impl<'a> FileRelay<'a> {
     /// A struct containing the handle to the service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, service: LockdowndService) -> Result<Self, FileRelayError> {
+    pub fn new(device: &'a Device, service: &LockdowndService) -> Result<Self, FileRelayError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::file_relay_client_new(device.pointer, service.pointer, &mut pointer)
@@ -82,14 +82,14 @@ impl<'a> FileRelay<'a> {
     /// *none*
     pub fn request_sources(
         &self,
-        sources: Vec<FileRelaySources>,
-        mut connection: DeviceConnection,
+        sources: &[FileRelaySources],
+        connection: &mut DeviceConnection,
         timeout: u32,
     ) -> Result<(), FileRelayError> {
         let mut source_c_strings: Vec<CString> = Vec::with_capacity(sources.len());
         let mut source_c_strings_ptrs: Vec<*const c_char> = Vec::with_capacity(sources.len() + 1);
         for source in sources {
-            source_c_strings.push(source.into());
+            source_c_strings.push((*source).into());
             source_c_strings_ptrs.push(source_c_strings.last().unwrap().as_ptr());
         }
         source_c_strings_ptrs.push(std::ptr::null());

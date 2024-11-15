@@ -25,7 +25,7 @@ impl<'a> MobileActivationClient<'a> {
     /// ***Verified:*** False
     pub fn new(
         device: &'a Device,
-        descriptor: LockdowndService,
+        descriptor: &LockdowndService,
     ) -> Result<Self, MobileActivationError> {
         let mut client = unsafe { std::mem::zeroed() };
 
@@ -167,8 +167,8 @@ impl<'a> MobileActivationClient<'a> {
     /// ***Verified:*** False
     pub fn activate(
         &self,
-        record: Plist,
-        session: Option<Plist>,
+        record: &Plist,
+        session: Option<&Plist>,
     ) -> Result<(), MobileActivationError> {
         let result = unsafe {
             if let Some(session) = session {

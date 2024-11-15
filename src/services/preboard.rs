@@ -25,7 +25,7 @@ impl<'a> PreboardClient<'a> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, PreboardError> {
+    pub fn new(device: &'a Device, descriptor: &LockdowndService) -> Result<Self, PreboardError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::preboard_client_new(device.pointer, descriptor.pointer, &mut pointer)
@@ -79,7 +79,7 @@ impl<'a> PreboardClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, data: Plist) -> Result<(), PreboardError> {
+    pub fn send(&self, data: &Plist) -> Result<(), PreboardError> {
         let result =
             unsafe { unsafe_bindings::preboard_send(self.pointer, data.get_pointer()) }.into();
 
@@ -121,12 +121,11 @@ impl<'a> PreboardClient<'a> {
     /// * `manifest` - The options to use while creating the stashbag
     /// # Returns
     /// *none*
-    pub fn create_stashbag(&self, manifest: Option<Plist>) -> Result<(), PreboardError> {
+    pub fn create_stashbag(&self, manifest: Option<&Plist>) -> Result<(), PreboardError> {
         let result = unsafe {
             unsafe_bindings::preboard_create_stashbag(
                 self.pointer,
                 manifest
-                    .as_ref()
                     .map_or(std::ptr::null_mut(), |p| p.get_pointer()),
                 None,
                 std::ptr::null_mut(),
@@ -148,12 +147,11 @@ impl<'a> PreboardClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn commit_stashbag(&self, manifest: Option<Plist>) -> Result<(), PreboardError> {
+    pub fn commit_stashbag(&self, manifest: Option<&Plist>) -> Result<(), PreboardError> {
         let result = unsafe {
             unsafe_bindings::preboard_commit_stashbag(
                 self.pointer,
                 manifest
-                    .as_ref()
                     .map_or(std::ptr::null_mut(), |p| p.get_pointer()),
                 None,
                 std::ptr::null_mut(),

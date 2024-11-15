@@ -19,7 +19,7 @@ impl<'a> ServiceClient<'a> {
     /// * `descriptor` - The lockdown service to jump off of
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, ServiceError> {
+    pub fn new(device: &'a Device, descriptor: &LockdowndService) -> Result<Self, ServiceError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::service_client_new(device.pointer, descriptor.pointer, &mut pointer)
@@ -86,7 +86,7 @@ impl<'a> ServiceClient<'a> {
     /// The number of bytes sent
     ///
     /// ***Verified:*** False
-    pub fn send(&self, data: Vec<u8>) -> Result<u32, ServiceError> {
+    pub fn send(&self, data: &[u8]) -> Result<u32, ServiceError> {
         let mut sent = 0;
         let result = unsafe {
             unsafe_bindings::service_send(

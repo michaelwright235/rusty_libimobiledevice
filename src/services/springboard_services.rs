@@ -27,7 +27,7 @@ impl<'a> SpringboardServicesClient<'a> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, SbservicesError> {
+    pub fn new(device: &'a Device, descriptor: &LockdowndService) -> Result<Self, SbservicesError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::sbservices_client_new(device.pointer, descriptor.pointer, &mut pointer)
@@ -84,7 +84,7 @@ impl<'a> SpringboardServicesClient<'a> {
     /// A plist with the icon state
     ///
     /// ***Verified:*** False
-    pub fn get_icon_state(&self, format_version: Option<String>) -> Result<Plist, SbservicesError> {
+    pub fn get_icon_state(&self, format_version: Option<&str>) -> Result<Plist, SbservicesError> {
         let mut plist = std::ptr::null_mut();
         let format_version_c_string = format_version.map(|s| CString::new(s).unwrap());
         let format_version_c_string_ptr = format_version_c_string
@@ -114,7 +114,7 @@ impl<'a> SpringboardServicesClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn set_icon_state(&self, state: Plist) -> Result<(), SbservicesError> {
+    pub fn set_icon_state(&self, state: &Plist) -> Result<(), SbservicesError> {
         let result = unsafe {
             unsafe_bindings::sbservices_set_icon_state(self.pointer, state.get_pointer())
         }

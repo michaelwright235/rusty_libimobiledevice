@@ -23,7 +23,7 @@ impl<'a> PropertyListServiceClient<'a> {
     /// ***Verified:*** False
     pub fn new(
         device: &'a Device,
-        descriptor: LockdowndService,
+        descriptor: &LockdowndService,
     ) -> Result<Self, PropertyListServiceError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
@@ -52,7 +52,7 @@ impl<'a> PropertyListServiceClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send_xml_plist(&self, data: Plist) -> Result<(), PropertyListServiceError> {
+    pub fn send_xml_plist(&self, data: &Plist) -> Result<(), PropertyListServiceError> {
         let result = unsafe {
             unsafe_bindings::property_list_service_send_xml_plist(self.pointer, data.get_pointer())
         }
@@ -72,7 +72,7 @@ impl<'a> PropertyListServiceClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send_binary_plist(&self, data: Plist) -> Result<(), PropertyListServiceError> {
+    pub fn send_binary_plist(&self, data: &Plist) -> Result<(), PropertyListServiceError> {
         let result = unsafe {
             unsafe_bindings::property_list_service_send_binary_plist(
                 self.pointer,

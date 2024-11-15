@@ -218,7 +218,7 @@ impl<'a> DebugServer<'a> {
     /// The response from the command, usually 'OK'
     ///
     /// ***Verified:*** False
-    pub fn send_command(&self, command: DebugServerCommand) -> Result<String, DebugServerError> {
+    pub fn send_command(&self, command: &DebugServerCommand) -> Result<String, DebugServerError> {
         let mut response: c_char = unsafe { std::mem::zeroed() };
         let mut response_ptr: *mut c_char = &mut response;
         let response_ptr_ptr: *mut *mut c_char = &mut response_ptr;

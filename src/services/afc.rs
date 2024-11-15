@@ -307,7 +307,7 @@ impl<'a> AfcClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn file_write(&self, handle: u64, data: Vec<u8>) -> Result<(), AfcError> {
+    pub fn file_write(&self, handle: u64, data: &[u8]) -> Result<(), AfcError> {
         let mut bytes_written = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::afc_file_write(

@@ -25,7 +25,7 @@ impl<'a> DiagnosticsRelay<'a> {
     /// A struct containing the handle to the service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, service: LockdowndService) -> Result<Self, DiagnosticsRelayError> {
+    pub fn new(device: &'a Device, service: &LockdowndService) -> Result<Self, DiagnosticsRelayError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_client_new(
@@ -186,7 +186,7 @@ impl<'a> DiagnosticsRelay<'a> {
     /// A plist with unknown usage
     ///
     /// ***Verified:*** False
-    pub fn query_mobilegestalt(&self, keys: Plist) -> Result<Plist, DiagnosticsRelayError> {
+    pub fn query_mobilegestalt(&self, keys: &Plist) -> Result<Plist, DiagnosticsRelayError> {
         let mut plist = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_query_mobilegestalt(

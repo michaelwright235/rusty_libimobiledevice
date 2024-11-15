@@ -36,7 +36,7 @@ impl<'a> MobileBackupClient<'a> {
     /// The lockdownd service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, service: LockdowndService) -> Result<Self, MobileBackupError> {
+    pub fn new(device: &'a Device, service: &LockdowndService) -> Result<Self, MobileBackupError> {
         let mut client = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
@@ -115,7 +115,7 @@ impl<'a> MobileBackupClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, message: Plist) -> Result<(), MobileBackupError> {
+    pub fn send(&self, message: &Plist) -> Result<(), MobileBackupError> {
         let result =
             unsafe { unsafe_bindings::mobilebackup_send(self.pointer, message.get_pointer()) }
                 .into();
@@ -134,12 +134,11 @@ impl<'a> MobileBackupClient<'a> {
     /// * `backup_verion` - The version of backup to use. The latest version is 1.6.
     pub fn request_backup(
         &self,
-        manifest: Option<Plist>,
+        manifest: Option<&Plist>,
         base_path: impl Into<String>,
         backup_version: impl Into<String>,
     ) -> Result<(), MobileBackupError> {
         let ptr = manifest
-            .as_ref()
             .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let base_path_c_string = CString::new(base_path.into()).unwrap();
@@ -187,7 +186,7 @@ impl<'a> MobileBackupClient<'a> {
     /// * `backup_version` - The backup version to use. The latest known version is 1.6.
     pub fn request_restore(
         &self,
-        manifest: Plist,
+        manifest: &Plist,
         flags: MobileBackupRestoreFlags,
         backup_version: impl Into<String>,
     ) -> Result<(), MobileBackupError> {
@@ -310,7 +309,7 @@ impl<'a> MobileBackup2Client<'a> {
     /// The lockdownd service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, service: LockdowndService) -> Result<Self, MobileBackup2Error> {
+    pub fn new(device: &'a Device, service: &LockdowndService) -> Result<Self, MobileBackup2Error> {
         let mut client = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
@@ -372,8 +371,8 @@ impl<'a> MobileBackup2Client<'a> {
     /// ***Verified:*** False
     pub fn send_message(
         &self,
-        message: Option<String>,
-        options: Plist,
+        message: Option<&str>,
+        options: &Plist,
     ) -> Result<(), MobileBackup2Error> {
         let message_c_string = message.map(|s| CString::new(s).unwrap());
         let message_c_string_ptr = message_c_string
@@ -519,7 +518,7 @@ impl<'a> MobileBackup2Client<'a> {
         request: MobileBackupRequest,
         target: impl Into<String>,
         source: impl Into<String>,
-        options: Plist,
+        options: &Plist,
     ) -> Result<(), MobileBackup2Error> {
         let result = unsafe {
             let target_c_string = CString::new(target.into()).unwrap();
@@ -550,8 +549,8 @@ impl<'a> MobileBackup2Client<'a> {
     pub fn send_status_response(
         &self,
         code: c_int,
-        status_string: Option<String>,
-        status_plist: Option<Plist>,
+        status_string: Option<&str>,
+        status_plist: Option<&Plist>,
     ) -> Result<(), MobileBackup2Error> {
         let status_plist = status_plist
             .as_ref()

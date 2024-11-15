@@ -116,7 +116,7 @@ impl<'a> RestoredClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, data: Plist) -> Result<(), RestoredError> {
+    pub fn send(&self, data: &Plist) -> Result<(), RestoredError> {
         let result =
             unsafe { unsafe_bindings::restored_send(self.pointer, data.get_pointer()) }.into();
         if result != RestoredError::Success {
@@ -167,9 +167,8 @@ impl<'a> RestoredClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn start_restore(&self, options: Option<Plist>, version: u64) -> Result<(), RestoredError> {
+    pub fn start_restore(&self, options: Option<&Plist>, version: u64) -> Result<(), RestoredError> {
         let ptr = options
-            .as_ref()
             .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result =

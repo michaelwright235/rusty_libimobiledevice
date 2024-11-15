@@ -23,7 +23,7 @@ impl<'a> MisagentClient<'a> {
     /// The lockdownd service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, MisagentError> {
+    pub fn new(device: &'a Device, descriptor: &LockdowndService) -> Result<Self, MisagentError> {
         let mut pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::misagent_client_new(device.pointer, descriptor.pointer, &mut pointer)
@@ -74,7 +74,7 @@ impl<'a> MisagentClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn install(&self, profile: Plist) -> Result<(), MisagentError> {
+    pub fn install(&self, profile: &Plist) -> Result<(), MisagentError> {
         let result =
             unsafe { unsafe_bindings::misagent_install(self.pointer, profile.get_pointer()) }
                 .into();

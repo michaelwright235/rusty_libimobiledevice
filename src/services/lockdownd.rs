@@ -135,7 +135,7 @@ impl<'a> LockdowndClient<'a> {
         &self,
         key: impl Into<String>,
         domain: impl Into<String>,
-        value: Plist,
+        value: &Plist,
     ) -> Result<(), LockdowndError> {
         let domain_c_string = CString::new(domain.into()).unwrap();
         let domain_c_string_ptr = if domain_c_string.is_empty() {
@@ -152,17 +152,21 @@ impl<'a> LockdowndClient<'a> {
             key_c_string.as_ptr()
         };
 
+        let cloned_plist = value.clone();
+
         let result = unsafe {
             unsafe_bindings::lockdownd_set_value(
                 self.pointer,
                 domain_c_string_ptr,
                 key_c_string_ptr,
-                value.get_pointer(),
+                // The underlying C function doesn't clone a plist (unlike the majority
+                // of other ones) so we do it manually
+                cloned_plist.get_pointer(),
             )
         }
         .into();
 
-        value.false_drop();
+        cloned_plist.false_drop();
 
         if result != LockdowndError::Success {
             return Err(result);
@@ -389,7 +393,7 @@ impl<'a> LockdowndClient<'a> {
     pub fn pair(
         &self,
         pairing_record: Option<LockdowndPairRecord>,
-        options: Option<Plist>,
+        options: Option<&Plist>,
     ) -> Result<(), LockdowndError> {
         let pair_ptr = pairing_record.map_or(std::ptr::null_mut(), |v| &mut v.into());
 

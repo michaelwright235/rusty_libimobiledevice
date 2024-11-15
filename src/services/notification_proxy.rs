@@ -22,7 +22,7 @@ impl<'a> NotificationProxyClient<'a> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, NpError> {
+    pub fn new(device: &'a Device, descriptor: &LockdowndService) -> Result<Self, NpError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::np_client_new(device.pointer, descriptor.pointer, &mut pointer)
@@ -77,8 +77,8 @@ impl<'a> NotificationProxyClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn post_notification(&self, notification: &str) -> Result<(), NpError> {
-        let notification_c_string = CString::new(notification).unwrap();
+    pub fn post_notification(&self, notification: impl Into<String>) -> Result<(), NpError> {
+        let notification_c_string = CString::new(notification.into()).unwrap();
         let result = unsafe {
             unsafe_bindings::np_post_notification(self.pointer, notification_c_string.as_ptr())
         }
@@ -98,8 +98,8 @@ impl<'a> NotificationProxyClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn observe_notification(&self, notification: &str) -> Result<(), NpError> {
-        let notification_c_string = CString::new(notification).unwrap();
+    pub fn observe_notification(&self, notification: impl Into<String>) -> Result<(), NpError> {
+        let notification_c_string = CString::new(notification.into()).unwrap();
         let result = unsafe {
             unsafe_bindings::np_observe_notification(self.pointer, notification_c_string.as_ptr())
         }

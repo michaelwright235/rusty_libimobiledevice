@@ -24,7 +24,7 @@ impl<'a> WebInspectorClient<'a> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, WebInspectorError> {
+    pub fn new(device: &'a Device, descriptor: &LockdowndService) -> Result<Self, WebInspectorError> {
         let mut pointer = std::ptr::null_mut();
 
         let result = unsafe {
@@ -87,7 +87,7 @@ impl<'a> WebInspectorClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, data: Plist) -> Result<(), WebInspectorError> {
+    pub fn send(&self, data: &Plist) -> Result<(), WebInspectorError> {
         let result =
             unsafe { unsafe_bindings::webinspector_send(self.pointer, data.get_pointer()) }.into();
 

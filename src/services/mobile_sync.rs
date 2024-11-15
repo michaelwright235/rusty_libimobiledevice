@@ -33,7 +33,7 @@ impl<'a> MobileSyncClient<'a> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, descriptor: LockdowndService) -> Result<Self, MobileSyncError> {
+    pub fn new(device: &'a Device, descriptor: &LockdowndService) -> Result<Self, MobileSyncError> {
         let mut pointer: unsafe_bindings::mobilesync_client_t = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::mobilesync_client_new(device.pointer, descriptor.pointer, &mut pointer)
@@ -110,7 +110,7 @@ impl<'a> MobileSyncClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, message: Plist) -> Result<(), MobileSyncError> {
+    pub fn send(&self, message: &Plist) -> Result<(), MobileSyncError> {
         let result =
             unsafe { unsafe_bindings::mobilesync_send(self.pointer, message.get_pointer()) }.into();
 
@@ -341,12 +341,11 @@ impl<'a> MobileSyncClient<'a> {
     /// ***Verified:*** False
     pub fn send_changes(
         &self,
-        entities: Plist,
+        entities: &Plist,
         is_last: bool,
-        actions: Option<Plist>,
+        actions: Option<&Plist>,
     ) -> Result<(), MobileSyncError> {
         let actions = actions
-            .as_ref()
             .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
@@ -373,7 +372,7 @@ impl<'a> MobileSyncClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn remap_identifiers(&self, mapping: Plist) -> Result<(), MobileSyncError> {
+    pub fn remap_identifiers(&self, mapping: &Plist) -> Result<(), MobileSyncError> {
         if mapping.plist_type != PlistType::Array {
             return Err(MobileSyncError::InvalidArg);
         }

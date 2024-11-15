@@ -64,7 +64,7 @@ impl HeartbeatClient {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, message: Plist) -> Result<(), HeartbeatError> {
+    pub fn send(&self, message: &Plist) -> Result<(), HeartbeatError> {
         let result =
             unsafe { unsafe_bindings::heartbeat_send(self.pointer, message.get_pointer()) }.into();
         if result != HeartbeatError::Success {

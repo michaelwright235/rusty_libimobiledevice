@@ -91,7 +91,7 @@ impl<'a> InstProxyClient<'a> {
     /// A plist with a list of applications
     ///
     /// ***Verified:*** False
-    pub fn browse_with_options(&self, client_options: Plist) -> Result<Plist, InstProxyError> {
+    pub fn browse_with_options(&self, client_options: &Plist) -> Result<Plist, InstProxyError> {
         let mut plist = std::ptr::null_mut();
 
         let result = unsafe {
@@ -218,13 +218,12 @@ impl<'a> InstProxyClient<'a> {
     pub fn install(
         &self,
         pkg_path: impl Into<String>,
-        client_options: Option<Plist>,
+        client_options: Option<&Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy install");
         let pkg_path_c_string = CString::new(pkg_path.into()).unwrap();
 
         let ptr = client_options
-            .as_ref()
             .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
@@ -255,13 +254,12 @@ impl<'a> InstProxyClient<'a> {
     pub fn upgrade(
         &self,
         pkg_path: impl Into<String>,
-        client_options: Option<Plist>,
+        client_options: Option<&Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy upgrade");
         let pkg_path_c_string = CString::new(pkg_path.into()).unwrap();
 
         let ptr = client_options
-            .as_ref()
             .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
@@ -292,13 +290,12 @@ impl<'a> InstProxyClient<'a> {
     pub fn uninstall(
         &self,
         app_id: impl Into<String>,
-        client_options: Option<Plist>,
+        client_options: Option<&Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy uninstall");
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
         let ptr = client_options
-            .as_ref()
             .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
@@ -325,12 +322,11 @@ impl<'a> InstProxyClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn lookup_archives(&self, client_options: Option<Plist>) -> Result<Plist, InstProxyError> {
+    pub fn lookup_archives(&self, client_options: Option<&Plist>) -> Result<Plist, InstProxyError> {
         let mut res_plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
         info!("Instproxy lookup archives");
 
         let ptr = client_options
-            .as_ref()
             .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
@@ -355,13 +351,12 @@ impl<'a> InstProxyClient<'a> {
     pub fn archive(
         &self,
         app_id: impl Into<String>,
-        client_options: Option<Plist>,
+        client_options: Option<&Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy archive");
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
         let ptr = client_options
-            .as_ref()
             .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
@@ -391,13 +386,12 @@ impl<'a> InstProxyClient<'a> {
     pub fn restore(
         &self,
         app_id: impl Into<String>,
-        client_options: Option<Plist>,
+        client_options: Option<&Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy restore");
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
         let ptr = client_options
-            .as_ref()
             .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
@@ -427,13 +421,12 @@ impl<'a> InstProxyClient<'a> {
     pub fn remove_archive(
         &self,
         app_id: impl Into<String>,
-        client_options: Option<Plist>,
+        client_options: Option<&Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy remove archive");
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
         let ptr = client_options
-            .as_ref()
             .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
@@ -463,7 +456,7 @@ impl<'a> InstProxyClient<'a> {
     pub fn check_capabilities_match(
         &self,
         capabilities: Vec<String>,
-        client_options: Option<Plist>,
+        client_options: Option<&Plist>,
     ) -> Result<Plist, InstProxyError> {
         let mut res_plist = unsafe { std::mem::zeroed() };
         let mut capabilities_c_str = Vec::with_capacity(capabilities.len());
@@ -475,7 +468,6 @@ impl<'a> InstProxyClient<'a> {
         capabilities_c_str_ptrs.push(std::ptr::null());
 
         let ptr = client_options
-            .as_ref()
             .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
