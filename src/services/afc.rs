@@ -29,7 +29,7 @@ impl<'a> AfcClient<'a> {
     /// The lockdownd service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device) -> Result<(Self, LockdowndService), String> {
+    pub fn new(device: &'a Device) -> Result<(Self, LockdowndService<'a>), String> {
         let mut pointer = unsafe { std::mem::zeroed() };
         let mut client_pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
