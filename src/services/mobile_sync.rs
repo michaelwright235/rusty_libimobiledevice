@@ -5,12 +5,12 @@ use std::{
     os::raw::c_char,
 };
 
+use plist_plus2::{from_pointer, Value};
+
 use crate::{
     bindings as unsafe_bindings, error::MobileSyncError, idevice::Device,
     services::lockdownd::LockdowndService,
 };
-
-use plist_plus::{Plist, PlistType};
 
 pub struct MobileSyncClient<'a> {
     pub(crate) pointer: unsafe_bindings::mobilesync_client_t,
@@ -91,7 +91,7 @@ impl<'a> MobileSyncClient<'a> {
     /// A plist containing the message
     ///
     /// ***Verified:*** False
-    pub fn receive(&self) -> Result<Plist, MobileSyncError> {
+    pub fn receive<'b>(&self) -> Result<Value<'b>, MobileSyncError> {
         let mut plist: unsafe_bindings::plist_t = std::ptr::null_mut();
         let result =
             unsafe { unsafe_bindings::mobilesync_receive(self.pointer, &mut plist) }.into();
@@ -100,7 +100,7 @@ impl<'a> MobileSyncClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Sends a message to the service
@@ -110,9 +110,9 @@ impl<'a> MobileSyncClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, message: &Plist) -> Result<(), MobileSyncError> {
+    pub fn send(&self, message: &Value) -> Result<(), MobileSyncError> {
         let result =
-            unsafe { unsafe_bindings::mobilesync_send(self.pointer, message.get_pointer()) }.into();
+            unsafe { unsafe_bindings::mobilesync_send(self.pointer, message.pointer()) }.into();
 
         if result != MobileSyncError::Success {
             return Err(result);
@@ -220,7 +220,7 @@ impl<'a> MobileSyncClient<'a> {
     /// The data, whether it's the end of the data and the anchors
     ///
     /// ***Verified:*** False
-    pub fn get_all_records_from_device(&self) -> Result<(Plist, bool, Plist), MobileSyncError> {
+    pub fn get_all_records_from_device<'b>(&self) -> Result<(Value<'b>, bool, Value<'b>), MobileSyncError> {
         let result =
             unsafe { unsafe_bindings::mobilesync_get_all_records_from_device(self.pointer) }.into();
 
@@ -238,7 +238,7 @@ impl<'a> MobileSyncClient<'a> {
     /// The data, whether it's the end of the data and the anchors
     ///
     /// ***Verified:*** False
-    pub fn get_changes_from_device(&self) -> Result<(Plist, bool, Plist), MobileSyncError> {
+    pub fn get_changes_from_device<'b>(&self) -> Result<(Value<'b>, bool, Value<'b>), MobileSyncError> {
         let result =
             unsafe { unsafe_bindings::mobilesync_get_changes_from_device(self.pointer) }.into();
 
@@ -273,7 +273,7 @@ impl<'a> MobileSyncClient<'a> {
     /// The data, whether it's the end of the data and the anchors
     ///
     /// ***Verified:*** False
-    pub fn receive_changes(&self) -> Result<(Plist, bool, Plist), MobileSyncError> {
+    pub fn receive_changes<'b>(&self) -> Result<(Value<'b>, bool, Value<'b>), MobileSyncError> {
         let mut plist: unsafe_bindings::plist_t = std::ptr::null_mut();
         let mut has_more_changes = 0;
         let mut anchor: unsafe_bindings::plist_t = std::ptr::null_mut();
@@ -292,7 +292,7 @@ impl<'a> MobileSyncClient<'a> {
             return Err(result);
         }
 
-        Ok((plist.into(), has_more_changes != 0, anchor.into()))
+        Ok(unsafe { (from_pointer(plist), has_more_changes != 0, from_pointer(anchor)) })
     }
 
     /// Acknoledge the changes from the device to continue sync
@@ -343,17 +343,17 @@ impl<'a> MobileSyncClient<'a> {
     /// ***Verified:*** False
     pub fn send_changes(
         &self,
-        entities: &Plist,
+        entities: &Value,
         is_last: bool,
-        actions: Option<&Plist>,
+        actions: Option<&Value>,
     ) -> Result<(), MobileSyncError> {
         let actions = actions
-            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
+            .map_or(std::ptr::null_mut(), |v| v.pointer());
 
         let result = unsafe {
             unsafe_bindings::mobilesync_send_changes(
                 self.pointer,
-                entities.get_pointer(),
+                entities.pointer(),
                 is_last.into(),
                 actions,
             )
@@ -374,13 +374,13 @@ impl<'a> MobileSyncClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn remap_identifiers(&self, mapping: &Plist) -> Result<(), MobileSyncError> {
-        if mapping.plist_type != PlistType::Array {
+    pub fn remap_identifiers(&self, mapping: &Value) -> Result<(), MobileSyncError> {
+        if mapping.as_array().is_none() {
             return Err(MobileSyncError::InvalidArg);
         }
 
         let result = unsafe {
-            unsafe_bindings::mobilesync_remap_identifiers(self.pointer, &mut mapping.get_pointer())
+            unsafe_bindings::mobilesync_remap_identifiers(self.pointer, &mut mapping.pointer())
         }
         .into();
 

@@ -2,12 +2,12 @@
 
 use std::ffi::CString;
 
+use plist_plus2::{from_pointer, Value};
+
 use crate::{
     bindings as unsafe_bindings, error::HouseArrestError, idevice::Device,
     services::lockdownd::LockdowndService,
 };
-
-use plist_plus::Plist;
 
 /// iTunes file transfer service.
 /// This differs from AFC in that this is for managing files in app specific storage accessable by iTunes.
@@ -82,9 +82,9 @@ impl<'a> HouseArrest<'a> {
     /// A plist containing the result of the request
     ///
     /// ***Verified:*** False
-    pub fn send_request(&self, request: &Plist) -> Result<Plist, HouseArrestError> {
+    pub fn send_request<'b>(&self, request: &Value) -> Result<Value<'b>, HouseArrestError> {
         let result = unsafe {
-            unsafe_bindings::house_arrest_send_request(self.pointer, request.get_pointer())
+            unsafe_bindings::house_arrest_send_request(self.pointer, request.pointer())
         }
         .into();
 
@@ -101,7 +101,7 @@ impl<'a> HouseArrest<'a> {
             return Err(result);
         }
 
-        Ok(plist_t.into())
+        Ok(unsafe {from_pointer(plist_t)})
     }
 
     /// Send a command to house arrest
@@ -112,11 +112,11 @@ impl<'a> HouseArrest<'a> {
     /// A plist containing the result of the request
     ///
     /// ***Verified:*** False
-    pub fn send_command(
+    pub fn send_command<'b>(
         &self,
         command: impl Into<String>,
         app_id: impl Into<String>,
-    ) -> Result<Plist, HouseArrestError> {
+    ) -> Result<Value<'b>, HouseArrestError> {
         let command_c_string = CString::new(command.into()).unwrap();
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
@@ -142,7 +142,7 @@ impl<'a> HouseArrest<'a> {
             return Err(result);
         }
 
-        Ok(plist_t.into())
+        Ok(unsafe {from_pointer(plist_t)})
     }
 }
 

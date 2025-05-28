@@ -2,12 +2,12 @@
 
 use std::ffi::CString;
 
+use plist_plus2::{from_pointer, Value};
+
 use crate::{
     bindings as unsafe_bindings, error::PreboardError, idevice::Device,
     services::lockdownd::LockdowndService,
 };
-
-use plist_plus::Plist;
 
 /// A service that manages data at the first unlock screen after boot.
 /// Prepare to be boarded!
@@ -79,9 +79,9 @@ impl<'a> PreboardClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, data: &Plist) -> Result<(), PreboardError> {
+    pub fn send(&self, data: &Value) -> Result<(), PreboardError> {
         let result =
-            unsafe { unsafe_bindings::preboard_send(self.pointer, data.get_pointer()) }.into();
+            unsafe { unsafe_bindings::preboard_send(self.pointer, data.pointer()) }.into();
 
         if result != PreboardError::Success {
             return Err(result);
@@ -98,7 +98,7 @@ impl<'a> PreboardClient<'a> {
     /// A plist containing the data
     ///
     /// ***Verified:*** False
-    pub fn receive(&self, timeout: u32) -> Result<Plist, PreboardError> {
+    pub fn receive<'b>(&self, timeout: u32) -> Result<Value<'b>, PreboardError> {
         let mut plist = std::ptr::null_mut();
         let result = unsafe {
             if timeout == 0 {
@@ -113,7 +113,7 @@ impl<'a> PreboardClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Creates a stashbag on the device
@@ -121,12 +121,12 @@ impl<'a> PreboardClient<'a> {
     /// * `manifest` - The options to use while creating the stashbag
     /// # Returns
     /// *none*
-    pub fn create_stashbag(&self, manifest: Option<&Plist>) -> Result<(), PreboardError> {
+    pub fn create_stashbag(&self, manifest: Option<&Value>) -> Result<(), PreboardError> {
         let result = unsafe {
             unsafe_bindings::preboard_create_stashbag(
                 self.pointer,
                 manifest
-                    .map_or(std::ptr::null_mut(), |p| p.get_pointer()),
+                    .map_or(std::ptr::null_mut(), |p| p.pointer()),
                 None,
                 std::ptr::null_mut(),
             )
@@ -147,12 +147,12 @@ impl<'a> PreboardClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn commit_stashbag(&self, manifest: Option<&Plist>) -> Result<(), PreboardError> {
+    pub fn commit_stashbag(&self, manifest: Option<&Value>) -> Result<(), PreboardError> {
         let result = unsafe {
             unsafe_bindings::preboard_commit_stashbag(
                 self.pointer,
                 manifest
-                    .map_or(std::ptr::null_mut(), |p| p.get_pointer()),
+                    .map_or(std::ptr::null_mut(), |p| p.pointer()),
                 None,
                 std::ptr::null_mut(),
             )

@@ -2,12 +2,12 @@
 
 use std::ffi::CString;
 
+use plist_plus2::{from_pointer, Value};
+
 use crate::{
     bindings as unsafe_bindings, error::WebInspectorError, idevice::Device,
     services::lockdownd::LockdowndService,
 };
-
-use plist_plus::Plist;
 
 /// First used on MacOS, this service is used to inspect the JavaScript and HTML of a site running on the device
 pub struct WebInspectorClient<'a> {
@@ -87,9 +87,9 @@ impl<'a> WebInspectorClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, data: &Plist) -> Result<(), WebInspectorError> {
+    pub fn send(&self, data: &Value) -> Result<(), WebInspectorError> {
         let result =
-            unsafe { unsafe_bindings::webinspector_send(self.pointer, data.get_pointer()) }.into();
+            unsafe { unsafe_bindings::webinspector_send(self.pointer, data.pointer()) }.into();
 
         if result != WebInspectorError::Success {
             return Err(result);
@@ -105,7 +105,7 @@ impl<'a> WebInspectorClient<'a> {
     /// The message received
     ///
     /// ***Verified:*** False
-    pub fn receive(&self, timeout: u32) -> Result<Plist, WebInspectorError> {
+    pub fn receive<'b>(&self, timeout: u32) -> Result<Value<'b>, WebInspectorError> {
         let mut plist = std::ptr::null_mut();
 
         let result = unsafe {
@@ -125,7 +125,7 @@ impl<'a> WebInspectorClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 }
 

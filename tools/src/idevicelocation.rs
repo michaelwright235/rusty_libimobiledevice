@@ -106,7 +106,7 @@ fn main() {
 
     // Start a generic service on the device. rusty_libimobiledevice currently doesn't have built in abstractions
     // for location services, but we can manually send packets through a generic service.
-    let mut lockdown_client = match device.new_lockdownd_client("idevicelocation") {
+    let lockdown_client = match device.new_lockdownd_client("idevicelocation") {
         Ok(l) => l,
         Err(e) => {
             println!("Error starting lockdown client: {:?}", e);
@@ -120,7 +120,7 @@ fn main() {
             return;
         }
     };
-    let service = match ServiceClient::new(&device, service) {
+    let service = match ServiceClient::new(&device, &service) {
         Ok(s) => s,
         Err(e) => {
             println!("Unable to convert service client: {:?}", e);
@@ -131,7 +131,7 @@ fn main() {
     match usage {
         Usage::Start => {
             // Send the starting bytes
-            match service.send([0, 0, 0, 0].to_vec()) {
+            match service.send(&[0, 0, 0, 0]) {
                 Ok(_) => {}
                 Err(e) => {
                     println!("Error sending start byte: {:?}", e);
@@ -141,16 +141,14 @@ fn main() {
 
             // Send latitude
             let lat_len = (latitude.len() as u32).to_be_bytes();
-            let lat_len = lat_len.to_vec();
-            match service.send(lat_len) {
+            match service.send(&lat_len) {
                 Ok(_) => {}
                 Err(e) => {
                     println!("Unable to send latitude length: {:?}", e);
                     return;
                 }
             }
-            let latitude = latitude.as_bytes();
-            match service.send(latitude.to_vec()) {
+            match service.send(&latitude.as_bytes()) {
                 Ok(_) => {}
                 Err(e) => {
                     println!("Unable to send latitude: {:?}", e);
@@ -160,16 +158,14 @@ fn main() {
 
             // Send longitude
             let lon_len = (longitude.len() as u32).to_be_bytes();
-            let lon_len = lon_len.to_vec();
-            match service.send(lon_len) {
+            match service.send(&lon_len) {
                 Ok(_) => {}
                 Err(e) => {
                     println!("Unable to send longitude length: {:?}", e);
                     return;
                 }
             }
-            let longitude = longitude.as_bytes().to_vec();
-            match service.send(longitude) {
+            match service.send(&longitude.as_bytes()) {
                 Ok(_) => {}
                 Err(e) => {
                     println!("Unable to send longitude: {:?}", e);
@@ -179,7 +175,7 @@ fn main() {
 
             println!("Done");
         }
-        Usage::Stop => match service.send([0, 0, 0, 1].to_vec()) {
+        Usage::Stop => match service.send(&[0, 0, 0, 1]) {
             Ok(_) => {
                 println!("Stopped successfully")
             }

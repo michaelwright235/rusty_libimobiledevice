@@ -2,17 +2,17 @@
 
 use std::ffi::CString;
 
+use plist_plus2::{from_pointer, Value};
+
 use crate::bindings as unsafe_bindings;
 use crate::error::UserPrefError;
-
-use plist_plus::Plist;
 
 /// Read the pair record from usbmuxd into a plist
 /// # Arguments
 /// * `udid` - The UDID of the device to fetch the pairing record of
 /// # Returns
 /// A plist containing the pair record
-pub fn read_pair_record(udid: impl Into<String>) -> Result<Plist, UserPrefError> {
+pub fn read_pair_record<'b>(udid: impl Into<String>) -> Result<Value<'b>, UserPrefError> {
     let udid = CString::new(udid.into()).unwrap();
     let mut to_fill = unsafe { std::mem::zeroed() };
     let results =
@@ -20,5 +20,5 @@ pub fn read_pair_record(udid: impl Into<String>) -> Result<Plist, UserPrefError>
     if results != UserPrefError::Success {
         return Err(results);
     }
-    Ok(to_fill.into())
+    Ok(unsafe {from_pointer(to_fill)})
 }

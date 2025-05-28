@@ -2,12 +2,12 @@
 
 use std::ffi::CString;
 
+use plist_plus2::{from_pointer, Value};
+
 use crate::{
     bindings as unsafe_bindings, error::MobileActivationError, idevice::Device,
     services::lockdownd::LockdowndService,
 };
-
-use plist_plus::Plist;
 
 pub struct MobileActivationClient<'a> {
     pub(crate) pointer: unsafe_bindings::mobileactivation_client_t,
@@ -89,7 +89,7 @@ impl<'a> MobileActivationClient<'a> {
     /// A plist with the results
     ///
     /// ***Verified:*** False
-    pub fn get_activation_state(&self) -> Result<Plist, MobileActivationError> {
+    pub fn get_activation_state<'b>(&self) -> Result<Value<'b>, MobileActivationError> {
         let mut plist = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
@@ -101,7 +101,7 @@ impl<'a> MobileActivationClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Gets a session blob for the device requied for activation.
@@ -110,7 +110,7 @@ impl<'a> MobileActivationClient<'a> {
     /// *none*
     /// # Returns
     /// A plist with the activation session info
-    pub fn create_activation_session_info(&self) -> Result<Plist, MobileActivationError> {
+    pub fn create_activation_session_info<'b>(&self) -> Result<Value<'b>, MobileActivationError> {
         let mut plist = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
@@ -125,7 +125,7 @@ impl<'a> MobileActivationClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Gets the activation info from Apple's servers
@@ -137,7 +137,7 @@ impl<'a> MobileActivationClient<'a> {
     /// ***Verified:*** False
     pub fn create_activation_info_with_session(
         &self,
-    ) -> Result<(Plist, Plist), MobileActivationError> {
+    ) -> Result<(Value, Value), MobileActivationError> {
         let plist = unsafe { std::mem::zeroed() };
         let mut session_plist = unsafe { std::mem::zeroed() };
 
@@ -154,7 +154,7 @@ impl<'a> MobileActivationClient<'a> {
             return Err(result);
         }
 
-        Ok((plist.into(), session_plist.into()))
+        Ok(unsafe {(from_pointer(plist), from_pointer(session_plist))})
     }
 
     /// Activates a device
@@ -167,18 +167,18 @@ impl<'a> MobileActivationClient<'a> {
     /// ***Verified:*** False
     pub fn activate(
         &self,
-        record: &Plist,
-        session: Option<&Plist>,
+        record: &Value,
+        session: Option<&Value>,
     ) -> Result<(), MobileActivationError> {
         let result = unsafe {
             if let Some(session) = session {
                 unsafe_bindings::mobileactivation_activate_with_session(
                     self.pointer,
-                    record.get_pointer(),
-                    session.get_pointer(),
+                    record.pointer(),
+                    session.pointer(),
                 )
             } else {
-                unsafe_bindings::mobileactivation_activate(self.pointer, record.get_pointer())
+                unsafe_bindings::mobileactivation_activate(self.pointer, record.pointer())
             }
         }
         .into();

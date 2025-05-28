@@ -1,5 +1,7 @@
 // jkcoxson
 
+use plist_plus2::{from_pointer, Value};
+
 use crate::{
     bindings as unsafe_bindings, error::PropertyListServiceError, idevice::Device,
     services::lockdownd::LockdowndService,
@@ -9,8 +11,6 @@ pub struct PropertyListServiceClient<'a> {
     pub(crate) pointer: unsafe_bindings::property_list_service_client_t,
     phantom: std::marker::PhantomData<&'a Device>,
 }
-
-use plist_plus::Plist;
 
 impl<'a> PropertyListServiceClient<'a> {
     /// Creates a preboard client from a property list service
@@ -52,9 +52,9 @@ impl<'a> PropertyListServiceClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send_xml_plist(&self, data: &Plist) -> Result<(), PropertyListServiceError> {
+    pub fn send_xml_plist(&self, data: &Value) -> Result<(), PropertyListServiceError> {
         let result = unsafe {
-            unsafe_bindings::property_list_service_send_xml_plist(self.pointer, data.get_pointer())
+            unsafe_bindings::property_list_service_send_xml_plist(self.pointer, data.pointer())
         }
         .into();
 
@@ -72,11 +72,11 @@ impl<'a> PropertyListServiceClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send_binary_plist(&self, data: &Plist) -> Result<(), PropertyListServiceError> {
+    pub fn send_binary_plist(&self, data: &Value) -> Result<(), PropertyListServiceError> {
         let result = unsafe {
             unsafe_bindings::property_list_service_send_binary_plist(
                 self.pointer,
-                data.get_pointer(),
+                data.pointer(),
             )
         }
         .into();
@@ -95,7 +95,7 @@ impl<'a> PropertyListServiceClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn receive_plist(&self, timeout: u32) -> Result<Plist, PropertyListServiceError> {
+    pub fn receive_plist<'b>(&self, timeout: u32) -> Result<Value<'b>, PropertyListServiceError> {
         let mut plist_t = std::ptr::null_mut();
         let result = unsafe {
             if timeout == 0 {
@@ -114,7 +114,7 @@ impl<'a> PropertyListServiceClient<'a> {
             return Err(result);
         }
 
-        Ok(plist_t.into())
+        Ok(unsafe {from_pointer(plist_t)})
     }
 
     /// Enables SSL on the service connection

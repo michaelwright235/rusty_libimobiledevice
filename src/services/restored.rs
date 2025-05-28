@@ -2,9 +2,9 @@
 
 use std::ffi::CString;
 
-use crate::{bindings as unsafe_bindings, error::RestoredError, idevice::Device};
+use plist_plus2::{from_pointer, Value};
 
-use plist_plus::Plist;
+use crate::{bindings as unsafe_bindings, error::RestoredError, idevice::Device};
 
 /// Restores an iDevice to a specific backup or iOS version
 pub struct RestoredClient<'a> {
@@ -74,7 +74,7 @@ impl<'a> RestoredClient<'a> {
     /// A plist with the returned value
     ///
     /// ***Verified:*** False
-    pub fn query_value(&self, key: impl Into<String>) -> Result<Plist, RestoredError> {
+    pub fn query_value<'b>(&self, key: impl Into<String>) -> Result<Value<'b>, RestoredError> {
         let mut value = std::ptr::null_mut();
         let key_c_string = CString::new(key.into()).unwrap();
         let result = unsafe {
@@ -85,7 +85,7 @@ impl<'a> RestoredClient<'a> {
             return Err(result);
         }
 
-        Ok(value.into())
+        Ok(unsafe {from_pointer(value)})
     }
 
     /// Gets a value from the client
@@ -95,7 +95,7 @@ impl<'a> RestoredClient<'a> {
     /// A plist with the returned value
     ///
     /// ***Verified:*** False
-    pub fn get_value(&self, key: impl Into<String>) -> Result<Plist, RestoredError> {
+    pub fn get_value<'b>(&self, key: impl Into<String>) -> Result<Value<'b>, RestoredError> {
         let mut value = std::ptr::null_mut();
         let key_c_string = CString::new(key.into()).unwrap();
         let result = unsafe {
@@ -106,7 +106,7 @@ impl<'a> RestoredClient<'a> {
             return Err(result);
         }
 
-        Ok(value.into())
+        Ok(unsafe {from_pointer(value)})
     }
 
     /// Sends a message to the client
@@ -116,9 +116,9 @@ impl<'a> RestoredClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, data: &Plist) -> Result<(), RestoredError> {
+    pub fn send(&self, data: &Value) -> Result<(), RestoredError> {
         let result =
-            unsafe { unsafe_bindings::restored_send(self.pointer, data.get_pointer()) }.into();
+            unsafe { unsafe_bindings::restored_send(self.pointer, data.pointer()) }.into();
         if result != RestoredError::Success {
             return Err(result);
         }
@@ -133,14 +133,14 @@ impl<'a> RestoredClient<'a> {
     /// A plist containing the response
     ///
     /// ***Verified:*** False
-    pub fn receive(&self) -> Result<Plist, RestoredError> {
+    pub fn receive<'b>(&self) -> Result<Value<'b>, RestoredError> {
         let mut value = std::ptr::null_mut();
         let result = unsafe { unsafe_bindings::restored_receive(self.pointer, &mut value) }.into();
         if result != RestoredError::Success {
             return Err(result);
         }
 
-        Ok(value.into())
+        Ok(unsafe {from_pointer(value)})
     }
 
     /// Sends a goodbye, terminating the connection
@@ -167,9 +167,9 @@ impl<'a> RestoredClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn start_restore(&self, options: Option<&Plist>, version: u64) -> Result<(), RestoredError> {
+    pub fn start_restore(&self, options: Option<&Value>, version: u64) -> Result<(), RestoredError> {
         let ptr = options
-            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
+            .map_or(std::ptr::null_mut(), |v| v.pointer());
 
         let result =
             unsafe { unsafe_bindings::restored_start_restore(self.pointer, ptr, version) }.into();

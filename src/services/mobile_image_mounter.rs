@@ -8,7 +8,7 @@ use std::{
 };
 
 use log::{info, trace};
-use plist_plus::Plist;
+use plist_plus2::{from_pointer, Value};
 use std::os::raw::c_void;
 
 use super::lockdownd::LockdowndService;
@@ -180,12 +180,12 @@ impl<'a> MobileImageMounter<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn mount_image(
+    pub fn mount_image<'b>(
         &self,
         image_path: impl Into<String>,
         image_type: impl Into<String>,
         signature_path: impl Into<String>,
-    ) -> Result<Plist, MobileImageMounterError> {
+    ) -> Result<Value<'b>, MobileImageMounterError> {
         let image_path = image_path.into();
         let image_type = image_type.into();
         let signature_path = signature_path.into();
@@ -237,7 +237,7 @@ impl<'a> MobileImageMounter<'a> {
         if result != MobileImageMounterError::Success {
             return Err(result);
         }
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Fetches all images mounted on the device
@@ -247,10 +247,10 @@ impl<'a> MobileImageMounter<'a> {
     /// A plist containing the results. This may return Ok even if failed, check the plist.
     ///
     /// ***Verified:*** False
-    pub fn lookup_image(
+    pub fn lookup_image<'b>(
         &self,
         image_type: impl Into<String>,
-    ) -> Result<Plist, MobileImageMounterError> {
+    ) -> Result<Value<'b>, MobileImageMounterError> {
         let image_type_c_string = CString::new(image_type.into()).unwrap();
         let image_type_c_string_ptr = if image_type_c_string.is_empty() {
             std::ptr::null()
@@ -273,7 +273,7 @@ impl<'a> MobileImageMounter<'a> {
         if result != MobileImageMounterError::Success {
             return Err(result);
         }
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 }
 

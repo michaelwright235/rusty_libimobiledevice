@@ -2,12 +2,12 @@
 
 use std::ffi::CString;
 
+use plist_plus2::{from_pointer, Value};
+
 use crate::{
     bindings::{self as unsafe_bindings, diagnostics_relay_action_t}, error::DiagnosticsRelayError, idevice::Device,
     services::lockdownd::LockdowndService,
 };
-
-use plist_plus::Plist;
 
 /// Relays diagnostic logs from the iOS device to the host
 pub struct DiagnosticsRelay<'a> {
@@ -156,10 +156,10 @@ impl<'a> DiagnosticsRelay<'a> {
     /// A plist containing the diagnostics data
     ///
     /// ***Verified:*** False
-    pub fn request_diagnostics(
+    pub fn request_diagnostics<'b>(
         &self,
         type_: impl Into<String>,
-    ) -> Result<Plist, DiagnosticsRelayError> {
+    ) -> Result<Value<'b>, DiagnosticsRelayError> {
         let mut plist = std::ptr::null_mut();
         let type_c_string = CString::new(type_.into()).unwrap();
         let result = unsafe {
@@ -175,7 +175,7 @@ impl<'a> DiagnosticsRelay<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Usage unknown
@@ -185,12 +185,12 @@ impl<'a> DiagnosticsRelay<'a> {
     /// A plist with unknown usage
     ///
     /// ***Verified:*** False
-    pub fn query_mobilegestalt(&self, keys: &Plist) -> Result<Plist, DiagnosticsRelayError> {
+    pub fn query_mobilegestalt<'b>(&self, keys: &Value) -> Result<Value<'b>, DiagnosticsRelayError> {
         let mut plist = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_query_mobilegestalt(
                 self.pointer,
-                keys.get_pointer(),
+                keys.pointer(),
                 &mut plist,
             )
         }
@@ -200,7 +200,7 @@ impl<'a> DiagnosticsRelay<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Requests data from the device's IO registry
@@ -211,11 +211,11 @@ impl<'a> DiagnosticsRelay<'a> {
     /// A plist containing the entry
     ///
     /// ***Verified:*** False
-    pub fn query_ioregistry_entry(
+    pub fn query_ioregistry_entry<'b>(
         &self,
         entry_name: impl Into<String>,
         entry_class: impl Into<String>,
-    ) -> Result<Plist, DiagnosticsRelayError> {
+    ) -> Result<Value<'b>, DiagnosticsRelayError> {
         let mut plist = std::ptr::null_mut();
         let entry_name_c_string = CString::new(entry_name.into()).unwrap();
         let entry_class_c_string = CString::new(entry_class.into()).unwrap();
@@ -234,7 +234,7 @@ impl<'a> DiagnosticsRelay<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Usage unknown
@@ -244,10 +244,10 @@ impl<'a> DiagnosticsRelay<'a> {
     /// A plist containing the requested data
     ///
     /// ***Verified:*** False
-    pub fn query_ioregistry_plane(
+    pub fn query_ioregistry_plane<'b>(
         &self,
         plane: impl Into<String>,
-    ) -> Result<Plist, DiagnosticsRelayError> {
+    ) -> Result<Value<'b>, DiagnosticsRelayError> {
         let mut plist = std::ptr::null_mut();
         let plane_c_string = CString::new(plane.into()).unwrap();
         let result = unsafe {
@@ -263,7 +263,7 @@ impl<'a> DiagnosticsRelay<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 }
 

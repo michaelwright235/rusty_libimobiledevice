@@ -5,7 +5,7 @@ use std::{ffi::CString, future::Future, pin::Pin};
 use crate::{bindings as unsafe_bindings, error::HeartbeatError, idevice::Device};
 
 use log::info;
-use plist_plus::Plist;
+use plist_plus2::{from_pointer, Value};
 
 /// A required service for most other services.
 /// iOS will close other connections if there is no active heartbeat client
@@ -25,8 +25,8 @@ pub struct HeartbeatClient {
 unsafe impl Send for HeartbeatClient {}
 unsafe impl Sync for HeartbeatClient {}
 
-unsafe impl Send for HeartbeatClientFuture {}
-unsafe impl Sync for HeartbeatClientFuture {}
+unsafe impl<'a> Send for HeartbeatClientFuture<'a> {}
+unsafe impl<'a> Sync for HeartbeatClientFuture<'a> {}
 
 impl HeartbeatClient {
     /// Starts a new service with heartbeat
@@ -64,9 +64,9 @@ impl HeartbeatClient {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, message: &Plist) -> Result<(), HeartbeatError> {
+    pub fn send(&self, message: &Value) -> Result<(), HeartbeatError> {
         let result =
-            unsafe { unsafe_bindings::heartbeat_send(self.pointer, message.get_pointer()) }.into();
+            unsafe { unsafe_bindings::heartbeat_send(self.pointer, message.pointer()) }.into();
         if result != HeartbeatError::Success {
             return Err(result);
         }
@@ -81,7 +81,7 @@ impl HeartbeatClient {
     /// The message as a plist
     ///
     /// ***Verified:*** False
-    pub fn receive(&self, timeout: u32) -> Result<Plist, HeartbeatError> {
+    pub fn receive<'b>(&self, timeout: u32) -> Result<Value<'b>, HeartbeatError> {
         let mut plist_ptr = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
@@ -102,7 +102,7 @@ impl HeartbeatClient {
             return Err(result);
         }
 
-        Ok(plist_ptr.into())
+        Ok(unsafe {from_pointer(plist_ptr)})
     }
 
     /// Receive data from the heartbeat service as a future.
@@ -118,18 +118,20 @@ impl HeartbeatClient {
             pointer: self.pointer,
             start_time: std::time::Instant::now(),
             timeout,
+            marker: Default::default()
         }
     }
 }
 
-pub struct HeartbeatClientFuture {
+pub struct HeartbeatClientFuture<'a> {
     pointer: unsafe_bindings::heartbeat_client_t,
     start_time: std::time::Instant,
     timeout: u32,
+    marker: std::marker::PhantomData<Value<'a>>
 }
 
-impl HeartbeatClientFuture {
-    fn receive(&self) -> Result<Plist, HeartbeatError> {
+impl<'a> HeartbeatClientFuture<'a> {
+    fn receive<'b>(&self) -> Result<Value<'b>, HeartbeatError> {
         let mut plist_ptr = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::heartbeat_receive_with_timeout(self.pointer, &mut plist_ptr, 1000)
@@ -138,12 +140,12 @@ impl HeartbeatClientFuture {
         if result != HeartbeatError::Success {
             return Err(result);
         }
-        Ok(plist_ptr.into())
+        Ok(unsafe {from_pointer(plist_ptr)})
     }
 }
 
-impl Future for HeartbeatClientFuture {
-    type Output = Result<Plist, HeartbeatError>;
+impl<'a> Future for HeartbeatClientFuture<'a> {
+    type Output = Result<Value<'a>, HeartbeatError>;
 
     fn poll(
         self: Pin<&mut Self>,

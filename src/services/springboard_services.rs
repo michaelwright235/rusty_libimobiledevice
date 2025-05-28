@@ -5,12 +5,12 @@ use std::{
     os::raw::{c_char, c_uint},
 };
 
+use plist_plus2::{from_pointer, Value};
+
 use crate::{
     bindings as unsafe_bindings, error::SbservicesError, idevice::Device,
     services::lockdownd::LockdowndService,
 };
-
-use plist_plus::Plist;
 
 /// A service to manage Springboard on iOS
 pub struct SpringboardServicesClient<'a> {
@@ -84,7 +84,7 @@ impl<'a> SpringboardServicesClient<'a> {
     /// A plist with the icon state
     ///
     /// ***Verified:*** False
-    pub fn get_icon_state(&self, format_version: Option<&str>) -> Result<Plist, SbservicesError> {
+    pub fn get_icon_state<'b>(&self, format_version: Option<&str>) -> Result<Value<'b>, SbservicesError> {
         let mut plist = std::ptr::null_mut();
         let format_version_c_string = format_version.map(|s| CString::new(s).unwrap());
         let format_version_c_string_ptr = format_version_c_string
@@ -104,7 +104,7 @@ impl<'a> SpringboardServicesClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Sets the icon state on the homescreen
@@ -114,9 +114,9 @@ impl<'a> SpringboardServicesClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn set_icon_state(&self, state: &Plist) -> Result<(), SbservicesError> {
+    pub fn set_icon_state(&self, state: &Value) -> Result<(), SbservicesError> {
         let result = unsafe {
-            unsafe_bindings::sbservices_set_icon_state(self.pointer, state.get_pointer())
+            unsafe_bindings::sbservices_set_icon_state(self.pointer, state.pointer())
         }
         .into();
 

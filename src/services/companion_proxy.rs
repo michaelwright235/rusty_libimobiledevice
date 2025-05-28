@@ -1,12 +1,12 @@
 // jkcoxson
 
+use plist_plus2::{from_pointer, Value};
+
 use crate::{
     bindings as unsafe_bindings, error::CompanionProxyError, idevice::Device,
     services::lockdownd::LockdowndService,
 };
 use std::ffi::CString;
-
-use plist_plus::Plist;
 
 /// A proxy for interoping with devices paired with the iOS device
 /// This includes the Apple Watch
@@ -84,9 +84,9 @@ impl<'a> CompanionProxy<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, message: &Plist) -> Result<(), CompanionProxyError> {
+    pub fn send(&self, message: &Value) -> Result<(), CompanionProxyError> {
         let result =
-            unsafe { unsafe_bindings::companion_proxy_send(self.pointer, message.get_pointer()) }
+            unsafe { unsafe_bindings::companion_proxy_send(self.pointer, message.pointer()) }
                 .into();
         if result != CompanionProxyError::Success {
             return Err(result);
@@ -103,7 +103,7 @@ impl<'a> CompanionProxy<'a> {
     /// A plist containing the message
     ///
     /// ***Verified:*** False
-    pub fn receive(&self) -> Result<Plist, CompanionProxyError> {
+    pub fn receive<'b>(&self) -> Result<Value<'b>, CompanionProxyError> {
         let mut plist = unsafe { std::mem::zeroed() };
         let result =
             unsafe { unsafe_bindings::companion_proxy_receive(self.pointer, &mut plist) }.into();
@@ -111,7 +111,7 @@ impl<'a> CompanionProxy<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Fetches the registry from the iOS device.
@@ -122,7 +122,7 @@ impl<'a> CompanionProxy<'a> {
     /// A plist containing the device registry
     ///
     /// ***Verified:*** False
-    pub fn get_device_registry(self) -> Result<Plist, CompanionProxyError> {
+    pub fn get_device_registry<'b>(self) -> Result<Value<'b>, CompanionProxyError> {
         let mut plist = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::companion_proxy_get_device_registry(self.pointer, &mut plist)
@@ -132,7 +132,7 @@ impl<'a> CompanionProxy<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Gets a value from the device's registry.
@@ -140,11 +140,11 @@ impl<'a> CompanionProxy<'a> {
     /// # Arguments
     /// * `udid` - The UDID of the paired device
     /// * `key` - The value to fetch from the registry
-    pub fn get_value_from_registry(
+    pub fn get_value_from_registry<'b>(
         self,
         udid: impl Into<String>,
         key: impl Into<String>,
-    ) -> Result<Plist, CompanionProxyError> {
+    ) -> Result<Value<'b>, CompanionProxyError> {
         let udid_c_string = CString::new(udid.into()).unwrap();
         let key_c_string = CString::new(key.into()).unwrap();
 
@@ -162,7 +162,7 @@ impl<'a> CompanionProxy<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Starts a port forwarding service for a paired device
@@ -178,7 +178,7 @@ impl<'a> CompanionProxy<'a> {
         &self,
         port: u16,
         service_name: impl Into<String>,
-        options: &Plist,
+        options: &Value,
     ) -> Result<u16, CompanionProxyError> {
         let mut result_port = 0;
         let service_name_c_string = CString::new(service_name.into()).unwrap();
@@ -189,7 +189,7 @@ impl<'a> CompanionProxy<'a> {
                 port,
                 service_name_c_string.as_ptr(),
                 &mut result_port,
-                options.get_pointer(),
+                options.pointer(),
             )
         }
         .into();

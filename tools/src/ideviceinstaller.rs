@@ -249,7 +249,7 @@ fn main() {
     };
 
     println!("Sending bytes of ipa");
-    match afc.file_write(handle, ipa_bytes) {
+    match afc.file_write(handle, &ipa_bytes) {
         Ok(_) => {}
         Err(e) => {
             println!("Unable to write ipa: {:?}", e);
@@ -273,7 +273,7 @@ fn main() {
     println!("Installing...");
     match inst_client.install(
         format!("./{}/{}/app.ipa", PKG_PATH, bundle_id),
-        Some(client_opts.clone()), // nobody understands libplist, but clone is necessary I guess
+        Some(&client_opts),
     ) {
         Ok(_) => {}
         Err(e) => {

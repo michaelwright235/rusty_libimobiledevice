@@ -1,12 +1,12 @@
 // jkcoxson
 
+use plist_plus2::{from_pointer, Value};
+
 use crate::{
     bindings as unsafe_bindings, error::MisagentError, idevice::Device,
     services::lockdownd::LockdowndService,
 };
 use std::{ffi::CString, os::raw::c_char};
-
-use plist_plus::Plist;
 
 /// Manges and checks provisioning profiles
 pub struct MisagentClient<'a> {
@@ -74,9 +74,9 @@ impl<'a> MisagentClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn install(&self, profile: &Plist) -> Result<(), MisagentError> {
+    pub fn install(&self, profile: &Value) -> Result<(), MisagentError> {
         let result =
-            unsafe { unsafe_bindings::misagent_install(self.pointer, profile.get_pointer()) }
+            unsafe { unsafe_bindings::misagent_install(self.pointer, profile.pointer()) }
                 .into();
         if result != MisagentError::Success {
             return Err(result);
@@ -92,7 +92,7 @@ impl<'a> MisagentClient<'a> {
     /// A plist containing the results
     ///
     /// ***Verified:*** False
-    pub fn copy(&self, low_version: bool) -> Result<Plist, MisagentError> {
+    pub fn copy<'b>(&self, low_version: bool) -> Result<Value<'b>, MisagentError> {
         let mut plist = unsafe { std::mem::zeroed() };
         let result = if low_version {
             unsafe { unsafe_bindings::misagent_copy(self.pointer, &mut plist) }.into()
@@ -103,7 +103,7 @@ impl<'a> MisagentClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Removes a provisioning profile from the device

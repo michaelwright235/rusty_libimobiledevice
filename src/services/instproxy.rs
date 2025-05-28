@@ -5,7 +5,7 @@ use std::ffi::{CStr, CString};
 use crate::{bindings as unsafe_bindings, error::InstProxyError, idevice::Device};
 
 use log::info;
-use plist_plus::Plist;
+use plist_plus2::{from_pointer, Array, Dictionary, PString, Value};
 
 /// Manages installing, removing and modifying applications on the device
 pub struct InstProxyClient<'a> {
@@ -58,7 +58,7 @@ impl<'a> InstProxyClient<'a> {
     /// A plist with a list of applications
     ///
     /// ***Verified:*** False
-    pub fn browse(&self, option: BrowseOption) -> Result<Plist, InstProxyError> {
+    pub fn browse<'b>(&self, option: BrowseOption) -> Result<Value<'b>, InstProxyError> {
         let mut plist = std::ptr::null_mut();
 
         let result = if option == BrowseOption::None {
@@ -66,11 +66,11 @@ impl<'a> InstProxyClient<'a> {
                 unsafe_bindings::instproxy_browse(self.pointer, std::ptr::null_mut(), &mut plist)
             }
         } else {
-            let option_plist: Plist = option.into();
+            let option_plist: Value = option.into();
             unsafe {
                 unsafe_bindings::instproxy_browse(
                     self.pointer,
-                    option_plist.get_pointer(),
+                    option_plist.pointer(),
                     &mut plist,
                 )
             }
@@ -81,7 +81,7 @@ impl<'a> InstProxyClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Lists installed applications on the device using an option plist
@@ -91,13 +91,13 @@ impl<'a> InstProxyClient<'a> {
     /// A plist with a list of applications
     ///
     /// ***Verified:*** False
-    pub fn browse_with_options(&self, client_options: &Plist) -> Result<Plist, InstProxyError> {
+    pub fn browse_with_options<'b>(&self, client_options: &Value) -> Result<Value<'b>, InstProxyError> {
         let mut plist = std::ptr::null_mut();
 
         let result = unsafe {
             unsafe_bindings::instproxy_browse(
                 self.pointer,
-                client_options.get_pointer(),
+                client_options.pointer(),
                 &mut plist,
             )
         }
@@ -107,7 +107,7 @@ impl<'a> InstProxyClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Creates a Plist containing return attributes for lookup
@@ -118,25 +118,25 @@ impl<'a> InstProxyClient<'a> {
     /// A plist containing the apps found
     ///
     /// ***Verified:*** False
-    pub fn create_return_attributes(
-        options: Vec<(impl Into<String>, Plist)>,
+    pub fn create_return_attributes<'b>(
+        options: Vec<(impl Into<String>, Value)>,
         args: Vec<impl Into<String>>,
-    ) -> Plist {
+    ) -> Dictionary<'b> {
         info!("Setting return attributes");
-        let mut pointer: Plist = unsafe { unsafe_bindings::instproxy_client_options_new() }.into();
+        let mut dict = unsafe { from_pointer(unsafe_bindings::instproxy_client_options_new()) }.into_dictionary().unwrap();
 
         for (key, value) in options {
-            pointer.dict_set_item(&key.into(), value).unwrap();
+            dict.insert(&key.into(), value);
         }
 
-        let mut return_attributes = Plist::new_array();
+        let mut return_attributes = Array::new();
         for i in args {
-            let t = Plist::new_string(&i.into());
-            return_attributes.array_append_item(t).unwrap();
+            let t = PString::new(&i.into());
+            return_attributes.append(t);
         }
-        let _ = pointer.dict_insert_item("ReturnAttributes", return_attributes);
+        let _ = dict.insert("ReturnAttributes", return_attributes);
 
-        pointer
+        dict
     }
 
     /// Creates new client options for instproxy operations
@@ -146,8 +146,8 @@ impl<'a> InstProxyClient<'a> {
     /// A plist containing empty client options
     ///
     /// ***Verified:*** False
-    pub fn client_options_new() -> Plist {
-        unsafe { unsafe_bindings::instproxy_client_options_new() }.into()
+    pub fn client_options_new<'b>() -> Dictionary<'b> {
+        unsafe { from_pointer(unsafe_bindings::instproxy_client_options_new()) }.into_dictionary().unwrap()
     }
 
     /// Looks up information about apps on the device
@@ -161,8 +161,8 @@ impl<'a> InstProxyClient<'a> {
     pub fn lookup(
         &self,
         app_ids: Vec<String>,
-        client_options: Option<Plist>,
-    ) -> Result<Plist, InstProxyError> {
+        client_options: Option<Value>,
+    ) -> Result<Value, InstProxyError> {
         // Convert vector of strings to a slice
         let cstrings = app_ids
             .into_iter()
@@ -178,9 +178,8 @@ impl<'a> InstProxyClient<'a> {
         };
 
         let opt_ptr = if let Some(client_options) = client_options {
-            let client_options = client_options;
-            let ptr = client_options.get_pointer();
-            client_options.false_drop();
+            let ptr = client_options.pointer();
+            std::mem::forget(client_options);
             ptr
         } else {
             std::ptr::null_mut()
@@ -204,7 +203,7 @@ impl<'a> InstProxyClient<'a> {
         unsafe { unsafe_bindings::instproxy_client_options_free(opt_ptr) };
 
         info!("Instproxy lookup done");
-        Ok(res_plist.into())
+        Ok(unsafe {from_pointer(res_plist)})
     }
 
     /// Installs a package on the device
@@ -218,13 +217,13 @@ impl<'a> InstProxyClient<'a> {
     pub fn install(
         &self,
         pkg_path: impl Into<String>,
-        client_options: Option<&Plist>,
+        client_options: Option<&Value>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy install");
         let pkg_path_c_string = CString::new(pkg_path.into()).unwrap();
 
         let ptr = client_options
-            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
+            .map_or(std::ptr::null_mut(), |v| v.pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_install(
@@ -254,13 +253,13 @@ impl<'a> InstProxyClient<'a> {
     pub fn upgrade(
         &self,
         pkg_path: impl Into<String>,
-        client_options: Option<&Plist>,
+        client_options: Option<&Value>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy upgrade");
         let pkg_path_c_string = CString::new(pkg_path.into()).unwrap();
 
         let ptr = client_options
-            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
+            .map_or(std::ptr::null_mut(), |v| v.pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_upgrade(
@@ -290,13 +289,13 @@ impl<'a> InstProxyClient<'a> {
     pub fn uninstall(
         &self,
         app_id: impl Into<String>,
-        client_options: Option<&Plist>,
+        client_options: Option<&Value>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy uninstall");
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
         let ptr = client_options
-            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
+            .map_or(std::ptr::null_mut(), |v| v.pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_uninstall(
@@ -322,12 +321,12 @@ impl<'a> InstProxyClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn lookup_archives(&self, client_options: Option<&Plist>) -> Result<Plist, InstProxyError> {
+    pub fn lookup_archives<'b>(&self, client_options: Option<&Value>) -> Result<Value<'b>, InstProxyError> {
         let mut res_plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
         info!("Instproxy lookup archives");
 
         let ptr = client_options
-            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
+            .map_or(std::ptr::null_mut(), |v| v.pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_lookup_archives(self.pointer, ptr, &mut res_plist)
@@ -336,7 +335,7 @@ impl<'a> InstProxyClient<'a> {
         if result != InstProxyError::Success {
             return Err(result);
         }
-        Ok(res_plist.into())
+        Ok(unsafe {from_pointer(res_plist)})
     }
 
     /// Creates an archive of the app
@@ -351,13 +350,13 @@ impl<'a> InstProxyClient<'a> {
     pub fn archive(
         &self,
         app_id: impl Into<String>,
-        client_options: Option<&Plist>,
+        client_options: Option<&Value>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy archive");
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
         let ptr = client_options
-            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
+            .map_or(std::ptr::null_mut(), |v| v.pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_archive(
@@ -386,13 +385,13 @@ impl<'a> InstProxyClient<'a> {
     pub fn restore(
         &self,
         app_id: impl Into<String>,
-        client_options: Option<&Plist>,
+        client_options: Option<&Value>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy restore");
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
         let ptr = client_options
-            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
+            .map_or(std::ptr::null_mut(), |v| v.pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_restore(
@@ -421,13 +420,13 @@ impl<'a> InstProxyClient<'a> {
     pub fn remove_archive(
         &self,
         app_id: impl Into<String>,
-        client_options: Option<&Plist>,
+        client_options: Option<&Value>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy remove archive");
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
         let ptr = client_options
-            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
+            .map_or(std::ptr::null_mut(), |v| v.pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_remove_archive(
@@ -453,11 +452,11 @@ impl<'a> InstProxyClient<'a> {
     /// A plist with the results of the check
     ///
     /// ***Verified:*** False
-    pub fn check_capabilities_match<I,S>(
+    pub fn check_capabilities_match<'b,I,S>(
         &self,
         capabilities: I,
-        client_options: Option<&Plist>,
-    ) -> Result<Plist, InstProxyError>
+        client_options: Option<&Value>,
+    ) -> Result<Value<'b>, InstProxyError>
     where
     I: IntoIterator<Item = S>,
     S: AsRef<str>,
@@ -472,7 +471,7 @@ impl<'a> InstProxyClient<'a> {
         capabilities_c_str_ptrs.push(std::ptr::null());
 
         let ptr = client_options
-            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
+            .map_or(std::ptr::null_mut(), |v| v.pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_check_capabilities_match(
@@ -486,7 +485,7 @@ impl<'a> InstProxyClient<'a> {
         if result != InstProxyError::Success {
             return Err(result);
         }
-        Ok(res_plist.into())
+        Ok(unsafe {from_pointer(res_plist)})
     }
 
     /// Gets the path for an app's bundle ID
@@ -532,19 +531,18 @@ pub enum BrowseOption {
     None,
 }
 
-impl From<BrowseOption> for Plist {
+impl<'a> From<BrowseOption> for Value<'a> {
     fn from(option: BrowseOption) -> Self {
-        let mut dict = Plist::new_dict();
+        let mut dict = Dictionary::new();
         let value = match option {
             BrowseOption::System => "System",
             BrowseOption::User => "User",
             BrowseOption::Internal => "Internal",
             BrowseOption::All => "All",
             BrowseOption::None => "None",
-        }
-        .into();
-        dict.dict_set_item("ApplicationType", value).unwrap();
-        dict
+        };
+        dict.insert("ApplicationType", value);
+        dict.into()
     }
 }
 

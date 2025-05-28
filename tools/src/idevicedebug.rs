@@ -101,12 +101,12 @@ fn main() {
                     let pid = format!("{}{}", "0".repeat(zeroes), pid);
                     let command = format!("{}{}", command, pid);
 
-                    match debug_server.send_command(command.into()) {
+                    match debug_server.send_command(&command.into()) {
                         Ok(_) => println!("Successfully attached to PID {}", app),
                         Err(e) => println!("Error: {:?}", e),
                     }
 
-                    match debug_server.send_command("D;".into()) {
+                    match debug_server.send_command(&"D;".into()) {
                         Ok(_) => println!("Successfully detached"),
                         Err(e) => println!("Error: {:?}", e),
                     }
@@ -213,12 +213,12 @@ fn main() {
             }
 
             if usage == Usage::Kill {
-                match debug_server.send_command("Q".into()) {
+                match debug_server.send_command(&"Q".into()) {
                     Ok(_) => println!("Successfully killed app"),
                     Err(e) => println!("Error killing app: {:?}", e),
                 }
             } else {
-                match debug_server.send_command("D".into()) {
+                match debug_server.send_command(&"D".into()) {
                     Ok(res) => println!("Detaching: {:?}", res),
                     Err(e) => {
                         println!("Error detaching: {:?}", e);

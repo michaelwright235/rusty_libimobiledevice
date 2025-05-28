@@ -5,14 +5,14 @@ use std::{
     os::raw::{c_char, c_int},
 };
 
+use plist_plus2::{from_pointer, Value};
+
 use crate::{
     bindings as unsafe_bindings,
     error::{MobileBackup2Error, MobileBackupError},
     idevice::Device,
     services::lockdownd::LockdowndService,
 };
-
-use plist_plus::Plist;
 
 /// Manages backups on older devices
 /// This is only for old versions of iOS, you are probably looking for MobileBackup2
@@ -95,7 +95,7 @@ impl<'a> MobileBackupClient<'a> {
     /// A plist containing the message
     ///
     /// ***Verified:*** False
-    pub fn receive(&self) -> Result<Plist, MobileBackupError> {
+    pub fn receive<'b>(&self) -> Result<Value<'b>, MobileBackupError> {
         let mut plist = unsafe { std::mem::zeroed() };
 
         let result =
@@ -105,7 +105,7 @@ impl<'a> MobileBackupClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Sends a message to the service
@@ -115,9 +115,9 @@ impl<'a> MobileBackupClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, message: &Plist) -> Result<(), MobileBackupError> {
+    pub fn send(&self, message: &Value) -> Result<(), MobileBackupError> {
         let result =
-            unsafe { unsafe_bindings::mobilebackup_send(self.pointer, message.get_pointer()) }
+            unsafe { unsafe_bindings::mobilebackup_send(self.pointer, message.pointer()) }
                 .into();
 
         if result != MobileBackupError::Success {
@@ -134,12 +134,12 @@ impl<'a> MobileBackupClient<'a> {
     /// * `backup_verion` - The version of backup to use. The latest version is 1.6.
     pub fn request_backup(
         &self,
-        manifest: Option<&Plist>,
+        manifest: Option<&Value>,
         base_path: impl Into<String>,
         backup_version: impl Into<String>,
     ) -> Result<(), MobileBackupError> {
         let ptr = manifest
-            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
+            .map_or(std::ptr::null_mut(), |v| v.pointer());
 
         let base_path_c_string = CString::new(base_path.into()).unwrap();
         let backup_version_c_string = CString::new(backup_version.into()).unwrap();
@@ -186,7 +186,7 @@ impl<'a> MobileBackupClient<'a> {
     /// * `backup_version` - The backup version to use. The latest known version is 1.6.
     pub fn request_restore(
         &self,
-        manifest: &Plist,
+        manifest: &Value,
         flags: MobileBackupRestoreFlags,
         backup_version: impl Into<String>,
     ) -> Result<(), MobileBackupError> {
@@ -195,7 +195,7 @@ impl<'a> MobileBackupClient<'a> {
         let result = unsafe {
             unsafe_bindings::mobilebackup_request_restore(
                 self.pointer,
-                manifest.get_pointer(),
+                manifest.pointer(),
                 flags.into(),
                 backup_version_c_string.as_ptr(),
             )
@@ -217,7 +217,7 @@ impl<'a> MobileBackupClient<'a> {
     /// A plist with the confirmation
     ///
     /// ***Verified:*** False
-    pub fn receive_restore_file_received(&self) -> Result<Plist, MobileBackupError> {
+    pub fn receive_restore_file_received<'b>(&self) -> Result<Value<'b>, MobileBackupError> {
         let mut plist = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
@@ -229,7 +229,7 @@ impl<'a> MobileBackupClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Receive a confirmation that the restore file was received
@@ -240,7 +240,7 @@ impl<'a> MobileBackupClient<'a> {
     /// A plist with the confirmation
     ///
     /// ***Verified:*** False
-    pub fn receive_restore_application_received(&self) -> Result<Plist, MobileBackupError> {
+    pub fn receive_restore_application_received<'b>(&self) -> Result<Value<'b>, MobileBackupError> {
         let mut plist = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
@@ -255,7 +255,7 @@ impl<'a> MobileBackupClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Tells the device that the restore is complete.
@@ -372,7 +372,7 @@ impl<'a> MobileBackup2Client<'a> {
     pub fn send_message(
         &self,
         message: Option<&str>,
-        options: &Plist,
+        options: &Value,
     ) -> Result<(), MobileBackup2Error> {
         let message_c_string = message.map(|s| CString::new(s).unwrap());
         let message_c_string_ptr = message_c_string
@@ -383,7 +383,7 @@ impl<'a> MobileBackup2Client<'a> {
             unsafe_bindings::mobilebackup2_send_message(
                 self.pointer,
                 message_c_string_ptr,
-                options.get_pointer(),
+                options.pointer(),
             )
         }
         .into();
@@ -402,7 +402,7 @@ impl<'a> MobileBackup2Client<'a> {
     /// Receives the DL* string and the message
     ///
     /// ***Verified:*** False
-    pub fn receive_message(&self) -> Result<(String, Plist), MobileBackup2Error> {
+    pub fn receive_message<'b>(&self) -> Result<(String, Value<'b>), MobileBackup2Error> {
         let mut message = unsafe { std::mem::zeroed() };
         let mut options = unsafe { std::mem::zeroed() };
 
@@ -415,12 +415,12 @@ impl<'a> MobileBackup2Client<'a> {
             return Err(result);
         }
 
-        Ok((
-            unsafe { std::ffi::CStr::from_ptr(message) }
+        Ok(unsafe {(
+            std::ffi::CStr::from_ptr(message)
                 .to_string_lossy()
                 .into_owned(),
-            options.into(),
-        ))
+            from_pointer(options),
+        )})
     }
 
     /// Sends raw data through the service connection
@@ -518,7 +518,7 @@ impl<'a> MobileBackup2Client<'a> {
         request: MobileBackupRequest,
         target: impl Into<String>,
         source: impl Into<String>,
-        options: &Plist,
+        options: &Value,
     ) -> Result<(), MobileBackup2Error> {
         let result = unsafe {
             let target_c_string = CString::new(target.into()).unwrap();
@@ -529,7 +529,7 @@ impl<'a> MobileBackup2Client<'a> {
                 request.as_ptr(),
                 target_c_string.as_ptr(),
                 source_c_string.as_ptr(),
-                options.get_pointer(),
+                options.pointer(),
             )
         }
         .into();
@@ -550,10 +550,10 @@ impl<'a> MobileBackup2Client<'a> {
         &self,
         code: c_int,
         status_string: Option<&str>,
-        status_plist: Option<&Plist>,
+        status_plist: Option<&Value>,
     ) -> Result<(), MobileBackup2Error> {
         let status_plist = status_plist
-            .map_or(std::ptr::null_mut(), |s| s.get_pointer());
+            .map_or(std::ptr::null_mut(), |s| s.pointer());
         let status_c_string = status_string.map(|s| CString::new(s).unwrap());
         let status_c_string_ptr = status_c_string
             .as_ref()

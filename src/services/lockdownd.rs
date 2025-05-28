@@ -8,7 +8,7 @@ use crate::error::LockdowndError;
 use crate::idevice::Device;
 
 use log::info;
-use plist_plus::Plist;
+use plist_plus2::{from_pointer, Value};
 
 /// A jumping point for other services.
 /// Lockdownd is in charge of starting other services and opening ports for them.
@@ -89,11 +89,11 @@ impl<'a> LockdowndClient<'a> {
     /// A plist containing the value
     ///
     /// ***Verified:*** False
-    pub fn get_value(
+    pub fn get_value<'b>(
         &self,
         key: impl Into<String>,
         domain: impl Into<String>,
-    ) -> Result<Plist, LockdowndError> {
+    ) -> Result<Value<'b>, LockdowndError> {
         let domain_c_string = CString::new(domain.into()).unwrap();
         let domain_c_string_ptr = if domain_c_string.is_empty() {
             std::ptr::null()
@@ -125,7 +125,7 @@ impl<'a> LockdowndClient<'a> {
             return Err(result);
         }
 
-        Ok(value.into())
+        Ok(unsafe {from_pointer(value)})
     }
 
     /// Sets a preference value on the device
@@ -141,7 +141,7 @@ impl<'a> LockdowndClient<'a> {
         &self,
         key: impl Into<String>,
         domain: impl Into<String>,
-        value: &Plist,
+        value: &Value,
     ) -> Result<(), LockdowndError> {
         let domain_c_string = CString::new(domain.into()).unwrap();
         let domain_c_string_ptr = if domain_c_string.is_empty() {
@@ -167,12 +167,12 @@ impl<'a> LockdowndClient<'a> {
                 key_c_string_ptr,
                 // The underlying C function doesn't clone a plist (unlike the majority
                 // of other ones) so we do it manually
-                cloned_plist.get_pointer(),
+                cloned_plist.pointer(),
             )
         }
         .into();
 
-        cloned_plist.false_drop();
+        std::mem::forget(cloned_plist);
 
         if result != LockdowndError::Success {
             return Err(result);
@@ -353,9 +353,9 @@ impl<'a> LockdowndClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, message: Plist) -> Result<(), LockdowndError> {
+    pub fn send(&self, message: Value) -> Result<(), LockdowndError> {
         let result =
-            unsafe { unsafe_bindings::lockdownd_send(self.pointer, message.get_pointer()) }.into();
+            unsafe { unsafe_bindings::lockdownd_send(self.pointer, message.pointer()) }.into();
 
         if result != LockdowndError::Success {
             return Err(result);
@@ -372,7 +372,7 @@ impl<'a> LockdowndClient<'a> {
     /// A plist with the message received
     ///
     /// ***Verified:*** False
-    pub fn receive(&self) -> Result<Plist, LockdowndError> {
+    pub fn receive<'b>(&self) -> Result<Value<'b>, LockdowndError> {
         let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
         let result = unsafe { unsafe_bindings::lockdownd_receive(self.pointer, &mut plist) }.into();
@@ -381,7 +381,7 @@ impl<'a> LockdowndClient<'a> {
             return Err(result);
         }
 
-        Ok(plist.into())
+        Ok(unsafe {from_pointer(plist)})
     }
 
     /// Attempts to pair with the device.
@@ -396,7 +396,7 @@ impl<'a> LockdowndClient<'a> {
     pub fn pair(
         &self,
         pairing_record: Option<&LockdowndPairRecord>,
-        options: Option<&Plist>,
+        options: Option<&Value>,
     ) -> Result<(), LockdowndError> {
         let pair_ptr = pairing_record.map_or(std::ptr::null(), |v| v.as_c_struct_ptr()) as *mut _;
 
@@ -407,7 +407,7 @@ impl<'a> LockdowndClient<'a> {
                 unsafe_bindings::lockdownd_pair_with_options(
                     self.pointer,
                     pair_ptr,
-                    options.get_pointer(),
+                    options.pointer(),
                     &mut response,
                 )
             }
@@ -469,9 +469,10 @@ impl<'a> LockdowndClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn activate(&self, activation_record: Plist) -> Result<(), LockdowndError> {
+    pub fn activate(&self, activation_record: Value) -> Result<(), LockdowndError> {
+        // TODO: check if activation_record can be a refernce and if it's ok not to std::mem::forget
         let result = unsafe {
-            unsafe_bindings::lockdownd_activate(self.pointer, activation_record.get_pointer())
+            unsafe_bindings::lockdownd_activate(self.pointer, activation_record.pointer())
         }
         .into();
 
