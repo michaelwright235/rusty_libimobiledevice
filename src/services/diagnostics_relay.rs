@@ -1,10 +1,9 @@
 // jkcoxson
 
 use std::ffi::CString;
-use std::os::raw::c_uint;
 
 use crate::{
-    bindings as unsafe_bindings, error::DiagnosticsRelayError, idevice::Device,
+    bindings::{self as unsafe_bindings, diagnostics_relay_action_t}, error::DiagnosticsRelayError, idevice::Device,
     services::lockdownd::LockdowndService,
 };
 
@@ -121,9 +120,9 @@ impl<'a> DiagnosticsRelay<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn restart(self, flag: c_uint) -> Result<(), DiagnosticsRelayError> {
+    pub fn restart(self, flag: DiagnosticsRelayAction) -> Result<(), DiagnosticsRelayError> {
         let result =
-            unsafe { unsafe_bindings::diagnostics_relay_restart(self.pointer, flag) }.into();
+            unsafe { unsafe_bindings::diagnostics_relay_restart(self.pointer, flag.into()) }.into();
 
         if result != DiagnosticsRelayError::Success {
             return Err(result);
@@ -139,9 +138,9 @@ impl<'a> DiagnosticsRelay<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn shutdown(self, flag: c_uint) -> Result<(), DiagnosticsRelayError> {
+    pub fn shutdown(self, flag: DiagnosticsRelayAction) -> Result<(), DiagnosticsRelayError> {
         let result =
-            unsafe { unsafe_bindings::diagnostics_relay_shutdown(self.pointer, flag) }.into();
+            unsafe { unsafe_bindings::diagnostics_relay_shutdown(self.pointer, flag.into()) }.into();
 
         if result != DiagnosticsRelayError::Success {
             return Err(result);
@@ -268,20 +267,26 @@ impl<'a> DiagnosticsRelay<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DiagnosticsRelayAction {
-    WaitForDisconnect,
-    DisplayPass,
-    DisplayFail,
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct DiagnosticsRelayAction {
+    pub wait_for_disconnect: bool,
+    pub display_pass: bool,
+    pub display_fail: bool,
 }
 
-impl From<DiagnosticsRelayAction> for c_uint {
+impl From<DiagnosticsRelayAction> for diagnostics_relay_action_t {
     fn from(action: DiagnosticsRelayAction) -> Self {
-        match action {
-            DiagnosticsRelayAction::WaitForDisconnect => 2,
-            DiagnosticsRelayAction::DisplayPass => 4,
-            DiagnosticsRelayAction::DisplayFail => 8,
+        let mut mask = 0;
+        if action.wait_for_disconnect {
+            mask |= unsafe_bindings::diagnostics_relay_action_t_DIAGNOSTICS_RELAY_ACTION_FLAG_WAIT_FOR_DISCONNECT;
         }
+        if action.display_pass {
+            mask |= unsafe_bindings::diagnostics_relay_action_t_DIAGNOSTICS_RELAY_ACTION_FLAG_DISPLAY_PASS;
+        }
+        if action.display_fail {
+            mask |= unsafe_bindings::diagnostics_relay_action_t_DIAGNOSTICS_RELAY_ACTION_FLAG_DISPLAY_FAIL;
+        }
+        mask
     }
 }
 
