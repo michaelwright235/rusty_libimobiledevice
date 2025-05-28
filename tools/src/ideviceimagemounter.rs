@@ -92,7 +92,7 @@ fn main() {
 
     let ios_version = match lockdown_client.get_value("ProductVersion".to_string(), "".to_string())
     {
-        Ok(ios_version) => ios_version.get_string_val().unwrap(),
+        Ok(ios_version) => ios_version.as_string().unwrap().to_string(),
         Err(e) => {
             println!("Error getting iOS version: {:?}", e);
             return;
@@ -125,7 +125,6 @@ fn main() {
         match mim.lookup_image(image_type) {
             Ok(plist) => {
                 println!("{:?}", plist);
-                println!("{:?}", plist.get_display_value().unwrap());
             }
             Err(e) => {
                 println!("Error listing images: {:?}", e);

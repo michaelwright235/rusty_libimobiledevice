@@ -68,17 +68,15 @@ fn main() {
         }
     };
     let output = match lckd.get_value("".to_string(), "".to_string()) {
-        Ok(output) => output,
+        Ok(output) => output.into_dictionary().unwrap(),
         Err(e) => {
             println!("Error: {:?}", e);
             return;
         }
     };
-    for line in output.into_iter() {
+    for (key, value) in &output {
         println!(
-            "{}: {}",
-            line.key.unwrap(),
-            line.plist.clone().get_display_value().unwrap()
+            "{key}: {value:?}",
         );
     }
 }

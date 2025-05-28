@@ -3,8 +3,7 @@
 use std::time;
 
 use rusty_libimobiledevice::{
-    idevice,
-    services::{afc::AfcFileMode, instproxy::InstProxyClient},
+    idevice, plist_plus2::from_binary, services::{afc::AfcFileMode, instproxy::InstProxyClient}
 };
 
 const PKG_PATH: &str = "PublicStaging";
@@ -177,29 +176,29 @@ fn main() {
                     return;
                 }
             };
-            let info_plist = match plist_plus::Plist::from_bin(buf) {
+            let info_plist = match from_binary(&buf) {
                 Ok(p) => p,
                 Err(_) => {
                     println!("Error converting extracted file to Plist!!");
                     return;
                 }
-            };
+            }.into_dictionary().unwrap();
 
-            let bid = match info_plist.dict_get_item("CFBundleIdentifier") {
-                Ok(b) => b,
-                Err(_) => {
+            let bid = match info_plist.get("CFBundleIdentifier") {
+                Some(b) => b,
+                None => {
                     println!("Plist does not contain bundle ID");
                     return;
                 }
             };
-            let bid = match bid.get_string_val() {
-                Ok(b) => b,
-                Err(_) => {
+            let bid = match bid.as_string() {
+                Some(b) => b,
+                None => {
                     println!("Plist does not contain bundle ID");
                     return;
                 }
             };
-            bundle_id = Some(bid)
+            bundle_id = Some(bid.clone())
         }
     }
 
@@ -259,8 +258,9 @@ fn main() {
 
     let mut client_opts = InstProxyClient::client_options_new();
     client_opts
-        .dict_set_item("CFBundleIdentifier", bundle_id.clone().into())
-        .unwrap();
+        .as_dictionary_mut()
+        .unwrap()
+        .insert("CFBundleIdentifier", bundle_id.clone());
 
     let inst_client = match device.new_instproxy_client("ideviceinstaller") {
         Ok(i) => i,

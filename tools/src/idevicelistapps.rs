@@ -1,7 +1,7 @@
 // jkcoxson
 // This one isn't an official tool, but something I think is necessary
 
-use plist_plus::Plist;
+use rusty_libimobiledevice::plist_plus2::PString;
 use rusty_libimobiledevice::idevice;
 use rusty_libimobiledevice::services::instproxy::InstProxyClient;
 
@@ -78,7 +78,7 @@ fn main() {
     };
 
     let client_opts = InstProxyClient::create_return_attributes(
-        vec![("ApplicationType".to_string(), Plist::new_string("Any"))],
+        vec![("ApplicationType".to_string(), PString::new("Any").into())],
         vec![
             "CFBundleIdentifier".to_string(),
             "CFBundleDisplayName".to_string(),
@@ -95,22 +95,23 @@ fn main() {
         }
     };
 
-    for app in lookup_results {
-        let id = app
-            .plist
-            .dict_get_item("CFBundleIdentifier")
+    for (_, value) in lookup_results.as_dictionary().unwrap() {
+        let value_dict = value.as_dictionary().unwrap();
+        let id = value_dict
+            .get("CFBundleIdentifier")
             .unwrap()
-            .get_string_val()
-            .unwrap();
+            .as_string()
+            .unwrap()
+            .to_string();
         if id.contains("com.apple") && !all {
             continue;
         }
         println!(
             "{}: {}",
-            app.plist
-                .dict_get_item("CFBundleDisplayName")
+            value_dict
+                .get("CFBundleDisplayName")
                 .unwrap()
-                .get_string_val()
+                .as_string()
                 .unwrap(),
             id
         );

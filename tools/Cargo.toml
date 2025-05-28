@@ -1,15 +1,14 @@
 [package]
 name = "examples"
-version = "0.0.0"
+version = "0.1.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-rusty_libimobiledevice = { version = "*", path = "../", features = [ "static", "vendored" ] }
-plist_plus = { version = "*", features = [ "static", "vendored" ] }
-env_logger = { version = "*" }
-zip = { version = "*" }
-regex = { version = "*" }
+rusty_libimobiledevice = { path = "../", features = [ "vendored", "static" ] }
+env_logger = { version = "0.11.8" }
+zip = { version = "4.0.0" }
+regex = { version = "1.11.1" }
 
 [[bin]]
 name = "idevice_id"

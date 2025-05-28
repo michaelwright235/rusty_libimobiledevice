@@ -2,7 +2,7 @@
 
 use std::convert::TryFrom;
 
-use plist_plus::Plist;
+use rusty_libimobiledevice::plist_plus2::PString;
 use rusty_libimobiledevice::idevice;
 use rusty_libimobiledevice::services::instproxy::InstProxyClient;
 
@@ -129,7 +129,7 @@ fn main() {
             };
 
             let client_opts = InstProxyClient::create_return_attributes(
-                vec![("ApplicationType".to_string(), Plist::new_string("Any"))],
+                vec![("ApplicationType".to_string(), PString::new("Any").into())],
                 vec![
                     "CFBundleIdentifier".to_string(),
                     "CFBundleExecutable".to_string(),
@@ -146,20 +146,21 @@ fn main() {
                     println!("Error looking up apps: {:?}", e);
                     return;
                 }
-            };
-            let lookup_results = lookup_results.dict_get_item(&app).unwrap();
+            }.into_dictionary().unwrap();
+            let lookup_results_item = lookup_results.get(&app).unwrap();
+            let lookup_results = lookup_results_item.as_dictionary().unwrap();
 
-            let working_directory = match lookup_results.dict_get_item("Container") {
-                Ok(p) => p,
-                Err(_) => {
+            let working_directory = match lookup_results.get("Container") {
+                Some(p) => p,
+                None => {
                     println!("App not found");
                     return;
                 }
             };
 
-            let working_directory = match working_directory.get_string_val() {
-                Ok(p) => p,
-                Err(_) => {
+            let working_directory = match working_directory.as_string() {
+                Some(p) => p,
+                None => {
                     println!("App not found");
                     return;
                 }
@@ -179,7 +180,7 @@ fn main() {
 
             println!("Bundle Path: {}", bundle_path);
 
-            match debug_server.send_command("QSetMaxPacketSize: 1024".into()) {
+            match debug_server.send_command(&"QSetMaxPacketSize: 1024".into()) {
                 Ok(res) => println!("Successfully set max packet size: {:?}", res),
                 Err(e) => {
                     println!("Error setting max packet size: {:?}", e);
@@ -187,7 +188,7 @@ fn main() {
                 }
             }
 
-            match debug_server.send_command(format!("QSetWorkingDir: {}", working_directory).into())
+            match debug_server.send_command(&format!("QSetWorkingDir: {}", working_directory).into())
             {
                 Ok(res) => println!("Successfully set working directory: {:?}", res),
                 Err(e) => {
@@ -204,7 +205,7 @@ fn main() {
                 }
             }
 
-            match debug_server.send_command("qLaunchSuccess".into()) {
+            match debug_server.send_command(&"qLaunchSuccess".into()) {
                 Ok(res) => println!("Got launch response: {:?}", res),
                 Err(e) => {
                     println!("Error checking if app launched: {:?}", e);
