@@ -21,11 +21,12 @@ pub struct LockdowndClient<'a> {
 /// A pair record for lockdown
 #[derive(Debug)]
 pub struct LockdowndPairRecord {
-    pub device_certificate: String,
-    pub host_certificate: String,
-    pub root_certificate: String,
-    pub host_id: String,
-    pub system_buid: String,
+    device_certificate: CString,
+    host_certificate: CString,
+    root_certificate: CString,
+    host_id: CString,
+    system_buid: CString,
+    c_struct: Box<unsafe_bindings::lockdownd_pair_record>
 }
 
 unsafe impl Send for LockdowndClient<'_> {}
@@ -394,10 +395,10 @@ impl<'a> LockdowndClient<'a> {
     /// ***Verified:*** False
     pub fn pair(
         &self,
-        pairing_record: Option<LockdowndPairRecord>,
+        pairing_record: Option<&LockdowndPairRecord>,
         options: Option<&Plist>,
     ) -> Result<(), LockdowndError> {
-        let pair_ptr = pairing_record.map_or(std::ptr::null_mut(), |v| &mut v.into());
+        let pair_ptr = pairing_record.map_or(std::ptr::null(), |v| v.as_c_struct_ptr()) as *mut _;
 
         let mut response = unsafe { std::mem::zeroed() };
 
@@ -429,10 +430,10 @@ impl<'a> LockdowndClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn validate_pair(&self, pairing_record: LockdowndPairRecord) -> Result<(), LockdowndError> {
-        let mut pairing_record = pairing_record.into();
+    pub fn validate_pair(&self, pairing_record: &LockdowndPairRecord) -> Result<(), LockdowndError> {
+        let pairing_record = pairing_record.as_c_struct_ptr();
         let result =
-            unsafe { unsafe_bindings::lockdownd_validate_pair(self.pointer, &mut pairing_record) }
+            unsafe { unsafe_bindings::lockdownd_validate_pair(self.pointer, pairing_record as *mut _) }
                 .into();
 
         if result != LockdowndError::Success {
@@ -449,10 +450,10 @@ impl<'a> LockdowndClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn unpair(&self, pairing_record: LockdowndPairRecord) -> Result<(), LockdowndError> {
-        let mut pairing_record = pairing_record.into();
+    pub fn unpair(&self, pairing_record: &LockdowndPairRecord) -> Result<(), LockdowndError> {
+        let pairing_record = pairing_record.as_c_struct_ptr();
         let result =
-            unsafe { unsafe_bindings::lockdownd_unpair(self.pointer, &mut pairing_record) }.into();
+            unsafe { unsafe_bindings::lockdownd_unpair(self.pointer, pairing_record as *mut _) }.into();
 
         if result != LockdowndError::Success {
             return Err(result);
@@ -664,29 +665,59 @@ impl<'a> LockdowndClient<'a> {
     }
 }
 
-impl From<LockdowndPairRecord> for unsafe_bindings::lockdownd_pair_record {
-    fn from(l: LockdowndPairRecord) -> Self {
-        info!("Converting device certificate");
-        let device_certificate = CString::new(l.device_certificate).unwrap();
-        info!("Converting host certificate");
-        let host_certificate = CString::new(l.host_certificate).unwrap();
-        info!("Converting root certificate");
-        let root_certificate = CString::new(l.root_certificate).unwrap();
-        info!("Converting host id");
-        let host_id = CString::new(l.host_id).unwrap();
-        info!("Converting system buid");
-        let system_buid = CString::new(l.system_buid).unwrap();
+impl LockdowndPairRecord {
+    pub fn new(device_certificate: impl Into<String>,
+        host_certificate: impl Into<String>,
+        root_certificate: impl Into<String>,
+        host_id: impl Into<String>,
+        system_buid: impl Into<String>) -> Self {
 
-        info!("Setting device certificate");
-        // TODO: check if it causes a memory leak, also it should not be freed
-        // on the C side (see CString::into_raw)
+        let device_certificate = CString::new(device_certificate.into()).unwrap();
+        let host_certificate = CString::new(host_certificate.into()).unwrap();
+        let root_certificate = CString::new(root_certificate.into()).unwrap();
+        let host_id = CString::new(host_id.into()).unwrap();
+        let system_buid = CString::new(system_buid.into()).unwrap();
+
+        let c_struct = unsafe_bindings::lockdownd_pair_record {
+            device_certificate: device_certificate.as_ptr() as *mut c_char,
+            host_certificate: host_certificate.as_ptr() as *mut c_char,
+            root_certificate: root_certificate.as_ptr() as *mut c_char,
+            host_id: host_id.as_ptr() as *mut c_char,
+            system_buid: system_buid.as_ptr() as *mut c_char,
+        };
+
         Self {
-            device_certificate: device_certificate.into_raw(),
-            host_certificate: host_certificate.into_raw(),
-            root_certificate: root_certificate.into_raw(),
-            host_id: host_id.into_raw(),
-            system_buid: system_buid.into_raw(),
+            device_certificate,
+            host_certificate,
+            root_certificate,
+            host_id,
+            system_buid,
+            c_struct: Box::new(c_struct)
         }
+    }
+
+    pub fn device_certificate(&self) -> &str {
+        self.device_certificate.as_c_str().to_str().unwrap()
+    }
+
+    pub fn host_certificate(&self) -> &str {
+        self.host_certificate.as_c_str().to_str().unwrap()
+    }
+
+    pub fn root_certificate(&self) -> &str {
+        self.root_certificate.as_c_str().to_str().unwrap()
+    }
+
+    pub fn host_id(&self) -> &str {
+        self.host_id.as_c_str().to_str().unwrap()
+    }
+
+    pub fn system_buid(&self) -> &str {
+        self.system_buid.as_c_str().to_str().unwrap()
+    }
+
+    pub(crate) fn as_c_struct_ptr(&self) -> *const unsafe_bindings::lockdownd_pair_record {
+        self.c_struct.as_ref()
     }
 }
 
