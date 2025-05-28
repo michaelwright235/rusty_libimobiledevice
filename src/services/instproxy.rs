@@ -121,7 +121,7 @@ impl<'a> InstProxyClient<'a> {
     pub fn create_return_attributes<'b>(
         options: Vec<(impl Into<String>, Value)>,
         args: Vec<impl Into<String>>,
-    ) -> Dictionary<'b> {
+    ) -> Value<'b> {
         info!("Setting return attributes");
         let mut dict = unsafe { from_pointer(unsafe_bindings::instproxy_client_options_new()) }.into_dictionary().unwrap();
 
@@ -136,7 +136,7 @@ impl<'a> InstProxyClient<'a> {
         }
         let _ = dict.insert("ReturnAttributes", return_attributes);
 
-        dict
+        dict.into()
     }
 
     /// Creates new client options for instproxy operations
@@ -146,8 +146,8 @@ impl<'a> InstProxyClient<'a> {
     /// A plist containing empty client options
     ///
     /// ***Verified:*** False
-    pub fn client_options_new<'b>() -> Dictionary<'b> {
-        unsafe { from_pointer(unsafe_bindings::instproxy_client_options_new()) }.into_dictionary().unwrap()
+    pub fn client_options_new<'b>() -> Value<'b> {
+        unsafe { from_pointer(unsafe_bindings::instproxy_client_options_new()) }
     }
 
     /// Looks up information about apps on the device
