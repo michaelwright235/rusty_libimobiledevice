@@ -33,8 +33,13 @@ unsafe impl Sync for LockdowndClient<'_> {}
 
 pub struct LockdowndService<'a> {
     pub(crate) pointer: unsafe_bindings::lockdownd_service_descriptor_t,
-    pub port: u32,
     pub(crate) phantom: std::marker::PhantomData<&'a LockdowndClient<'a>>,
+}
+
+impl LockdowndService<'_> {
+    pub fn port(&self) -> u16 {
+        unsafe { &*self.pointer }.port
+    }
 }
 
 unsafe impl Send for LockdowndService<'_> {}
@@ -269,11 +274,8 @@ impl<'a> LockdowndClient<'a> {
             return Err(result);
         }
 
-        let service_struct: &unsafe_bindings::lockdownd_service_descriptor = unsafe { &*service };
-
         Ok(LockdowndService {
             pointer: service,
-            port: service_struct.port as u32,
             phantom: std::marker::PhantomData,
         })
     }
