@@ -586,23 +586,29 @@ pub enum MobileBackupRequest {
 }
 
 /// Choose what to restore
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MobileBackupRestoreFlags {
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct MobileBackupRestoreFlags {
     /// Show a restore screen on the device
-    Springboard,
+    pub notify_springboard: bool,
     /// Don't overwrite any settings
-    Settings,
+    pub preserve_settings: bool,
     /// Don't overwrite the cameraroll
-    CameraRoll,
+    pub preserve_camera_roll: bool,
 }
 
-impl From<MobileBackupRestoreFlags> for c_uint {
-    fn from(flag: MobileBackupRestoreFlags) -> Self {
-        match flag {
-            MobileBackupRestoreFlags::Springboard => 1,
-            MobileBackupRestoreFlags::Settings => 2,
-            MobileBackupRestoreFlags::CameraRoll => 4,
+impl From<MobileBackupRestoreFlags> for std::os::raw::c_uint {
+    fn from(flags: MobileBackupRestoreFlags) -> Self {
+        let mut mask = 0;
+        if flags.notify_springboard {
+            mask |= unsafe_bindings::mobilebackup_flags_t_MB_RESTORE_NOTIFY_SPRINGBOARD;
         }
+        if flags.preserve_settings {
+            mask |= unsafe_bindings::mobilebackup_flags_t_MB_RESTORE_PRESERVE_SETTINGS;
+        }
+        if flags.preserve_camera_roll {
+            mask |= unsafe_bindings::mobilebackup_flags_t_MB_RESTORE_PRESERVE_CAMERA_ROLL;
+        }
+        mask
     }
 }
 
