@@ -14,3 +14,5 @@ pub mod idevice;
 pub mod service;
 /// A module that contains all abstractions for built-in services
 pub mod services;
+
+pub use plist_plus2;
