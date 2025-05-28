@@ -119,12 +119,16 @@ impl<'a> NotificationProxyClient<'a> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn observe_notifications(&self, notifications: Vec<&str>) -> Result<(), NpError> {
-        let mut not_c_strings = Vec::with_capacity(notifications.len());
-        let mut not_ptrs = Vec::with_capacity(not_c_strings.len() + 1);
+    pub fn observe_notifications<I,S>(&self, notifications: I) -> Result<(), NpError>
+    where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+    {
+        let mut not_c_strings = Vec::new();
+        let mut not_ptrs = Vec::new();
 
         for notification in notifications {
-            not_c_strings.push(CString::new(notification).unwrap());
+            not_c_strings.push(CString::new(notification.as_ref().to_string()).unwrap());
             not_ptrs.push(not_c_strings.last().unwrap().as_ptr());
         }
         not_ptrs.push(std::ptr::null());

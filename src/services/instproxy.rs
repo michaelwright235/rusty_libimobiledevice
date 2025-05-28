@@ -453,16 +453,20 @@ impl<'a> InstProxyClient<'a> {
     /// A plist with the results of the check
     ///
     /// ***Verified:*** False
-    pub fn check_capabilities_match(
+    pub fn check_capabilities_match<I,S>(
         &self,
-        capabilities: Vec<String>,
+        capabilities: I,
         client_options: Option<&Plist>,
-    ) -> Result<Plist, InstProxyError> {
+    ) -> Result<Plist, InstProxyError>
+    where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+    {
         let mut res_plist = unsafe { std::mem::zeroed() };
-        let mut capabilities_c_str = Vec::with_capacity(capabilities.len());
-        let mut capabilities_c_str_ptrs = Vec::with_capacity(capabilities.len() + 1);
+        let mut capabilities_c_str = Vec::new();
+        let mut capabilities_c_str_ptrs = Vec::new();
         for capability in capabilities {
-            capabilities_c_str.push(CString::new(capability).unwrap());
+            capabilities_c_str.push(CString::new(capability.as_ref().to_string()).unwrap());
             capabilities_c_str_ptrs.push(capabilities_c_str.last().unwrap().as_ptr())
         }
         capabilities_c_str_ptrs.push(std::ptr::null());

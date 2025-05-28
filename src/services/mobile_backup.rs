@@ -2,7 +2,7 @@
 
 use std::{
     ffi::CString,
-    os::raw::{c_char, c_int, c_uint},
+    os::raw::{c_char, c_int},
 };
 
 use crate::{
@@ -485,12 +485,12 @@ impl<'a> MobileBackup2Client<'a> {
     /// * The version of the iOS device
     ///
     /// ***Verified:*** False
-    pub fn version_exchange(&self, versions: &mut [f64]) -> Result<f64, MobileBackup2Error> {
+    pub fn version_exchange(&self, versions: &[f64]) -> Result<f64, MobileBackup2Error> {
         let mut version = 0.0;
         let result = unsafe {
             unsafe_bindings::mobilebackup2_version_exchange(
                 self.pointer,
-                versions.as_mut_ptr(),
+                versions.as_ptr() as *mut f64,
                 versions.len() as c_char,
                 &mut version,
             )
@@ -553,7 +553,6 @@ impl<'a> MobileBackup2Client<'a> {
         status_plist: Option<&Plist>,
     ) -> Result<(), MobileBackup2Error> {
         let status_plist = status_plist
-            .as_ref()
             .map_or(std::ptr::null_mut(), |s| s.get_pointer());
         let status_c_string = status_string.map(|s| CString::new(s).unwrap());
         let status_c_string_ptr = status_c_string

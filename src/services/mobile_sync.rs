@@ -134,14 +134,16 @@ impl<'a> MobileSyncClient<'a> {
     pub fn start(
         &self,
         data_class: impl Into<String>,
-        mut anchors: Vec<MobileSyncAnchor>,
+        anchors: &mut [MobileSyncAnchor],
         computer_data_class_version: u64,
         sync_type: MobileSyncType,
     ) -> Result<(), (String, MobileSyncError)> {
         let data_class_c_string = CString::new(data_class.into()).unwrap();
 
-        let mut anchor_ptrs: Vec<*mut unsafe_bindings::mobilesync_anchors> =
-            anchors.iter_mut().map(|v| v.as_c_struct_ptr()).collect();
+        let mut anchor_ptrs: Vec<*mut unsafe_bindings::mobilesync_anchors> = anchors
+            .iter_mut()
+            .map(|v| v.as_c_struct_ptr())
+            .collect();
         anchor_ptrs.push(std::ptr::null_mut());
 
         let mut device_data_class_version = 0;

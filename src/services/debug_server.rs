@@ -35,11 +35,11 @@ impl<'a> DebugServer<'a> {
     /// A debug server struct
     ///
     /// ***Verified:*** False
-    pub fn new(device: &'a Device, label: &str) -> Result<Self, DebugServerError> {
+    pub fn new(device: &'a Device, label: impl Into<String>) -> Result<Self, DebugServerError> {
         let mut client: unsafe_bindings::debugserver_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::debugserver_client_t = &mut client;
 
-        let label_c_string = CString::new(label).unwrap();
+        let label_c_string = CString::new(label.into()).unwrap();
         info!("Creating debug server for {}", device.get_udid());
         let result = unsafe {
             unsafe_bindings::debugserver_client_start_service(
@@ -258,11 +258,15 @@ impl<'a> DebugServer<'a> {
     /// The response from the command, usually 'OK'
     ///
     /// ***Verified:*** False
-    pub fn set_argv(&self, args: Vec<String>) -> Result<String, DebugServerError> {
-        let mut argv = Vec::with_capacity(args.len() + 1);
-        let mut c_strings = Vec::with_capacity(args.len());
+    pub fn set_argv<I,S>(&self, args: I) -> Result<String, DebugServerError>
+    where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+    {
+        let mut argv = Vec::new();
+        let mut c_strings = Vec::new();
         for arg in args {
-            c_strings.push(CString::new(arg).unwrap());
+            c_strings.push(CString::new(arg.as_ref().to_string()).unwrap());
             argv.push(c_strings.last().unwrap().as_ptr() as *mut c_char)
         }
         argv.push(std::ptr::null_mut());
@@ -354,10 +358,14 @@ impl DebugServerCommand {
     /// The struct containing the command
     ///
     /// ***Verified:*** False
-    pub fn new(
+    pub fn new<I,S>(
         command: impl Into<String>,
-        arguments: Vec<String>,
-    ) -> Result<DebugServerCommand, String> {
+        arguments: I,
+    ) -> Result<DebugServerCommand, String>
+    where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+    {
         let mut command_ptr: unsafe_bindings::debugserver_command_t = unsafe { std::mem::zeroed() };
         let command_ptr_ptr: *mut unsafe_bindings::debugserver_command_t = &mut command_ptr;
 
@@ -365,15 +373,15 @@ impl DebugServerCommand {
 
         // Create C array
         let mut arguments_c_array: Vec<c_char> = Vec::new();
-        for i in arguments.iter() {
-            let c_str = std::ffi::CString::new(i.clone()).unwrap();
+        for i in arguments {
+            let c_str = std::ffi::CString::new(i.as_ref().to_string()).unwrap();
             arguments_c_array.push(c_str.as_bytes_with_nul()[0].try_into().unwrap());
         }
         // Create pointer to to_fill[0]
         let mut c_array_ptr: *mut c_char = arguments_c_array.as_mut_ptr();
         let mut c_array_ptr_ptr: *mut *mut c_char = &mut c_array_ptr;
 
-        if arguments.is_empty() {
+        if arguments_c_array.is_empty() {
             c_array_ptr_ptr = std::ptr::null_mut();
         }
 
@@ -381,7 +389,7 @@ impl DebugServerCommand {
         let result = unsafe {
             unsafe_bindings::debugserver_command_new(
                 command_c_str.as_ptr(),
-                arguments.len() as i32,
+                arguments_c_array.len() as i32,
                 c_array_ptr_ptr,
                 command_ptr_ptr,
             )
@@ -402,7 +410,7 @@ impl From<String> for DebugServerCommand {
         let mut split = s.split_whitespace();
         let command = split.next().unwrap().to_string();
         let arguments: Vec<String> = split.map(|s| s.to_string()).collect();
-        DebugServerCommand::new(command, arguments).unwrap()
+        DebugServerCommand::new(command, &arguments).unwrap()
     }
 }
 impl From<&str> for DebugServerCommand {
