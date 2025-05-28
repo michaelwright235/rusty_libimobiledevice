@@ -235,7 +235,7 @@ impl<'a> LockdowndClient<'a> {
     ///
     /// ***Verified:*** False
     pub fn start_service(
-        &mut self,
+        &self,
         service: impl Into<String>,
         escrow_bag: bool,
     ) -> Result<LockdowndService, LockdowndError> {
