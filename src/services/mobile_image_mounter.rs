@@ -1,15 +1,14 @@
 // jkcoxson
 
 use std::{
-    ffi::CString,
+    ffi::{CString, c_char},
     io::Read,
-    os::raw::c_char,
     path::PathBuf,
 };
 
 use log::{info, trace};
 use plist_plus2::{from_pointer, Value};
-use std::os::raw::c_void;
+use std::ffi::c_void;
 
 use super::lockdownd::LockdowndService;
 use crate::{bindings as unsafe_bindings, error::MobileImageMounterError, idevice::Device};
@@ -151,8 +150,8 @@ impl<'a> MobileImageMounter<'a> {
                 self.pointer,
                 image_type_c_string_ptr,
                 dmg_size,
-                signature_buffer as *const std::os::raw::c_uchar,
-                signature_size as std::os::raw::c_uint,
+                signature_buffer as *const std::ffi::c_uchar,
+                signature_size as std::ffi::c_uint,
                 Some(image_mounter_callback),
                 image_buffer as *mut c_void,
             )
@@ -226,8 +225,8 @@ impl<'a> MobileImageMounter<'a> {
             unsafe_bindings::mobile_image_mounter_mount_image(
                 self.pointer,
                 image_path.as_ptr() as *const c_char,
-                signature_buffer.as_ptr() as *const std::os::raw::c_uchar,
-                signature_buffer.len() as std::os::raw::c_uint,
+                signature_buffer.as_ptr() as *const std::ffi::c_uchar,
+                signature_buffer.len() as std::ffi::c_uint,
                 image_type_c_string_ptr,
                 &mut plist,
             )

@@ -1,7 +1,7 @@
 // jkcoxson
 // Experimental system for wrapping a C callback in safe Rust
 
-use std::os::raw::c_void;
+use std::ffi::c_void;
 
 use crate::bindings as unsafe_bindings;
 use crate::idevice::IDeviceEvent;

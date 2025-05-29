@@ -559,8 +559,8 @@ extern "C" {
     #[allow(clashing_extern_declarations)] // this one is better
     pub fn instproxy_client_options_set_return_attributes(
         client_options: unsafe_bindings::plist_t,
-        key: *const ::std::os::raw::c_char,
-        value: *const ::std::os::raw::c_char,
+        key: *const ::std::ffi::c_char,
+        value: *const ::std::ffi::c_char,
         null: *const u8,
     );
 }

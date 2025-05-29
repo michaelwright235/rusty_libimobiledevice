@@ -6,7 +6,7 @@ use crate::bindings as unsafe_bindings;
 use crate::error::NpError;
 use crate::idevice::Device;
 use crate::services::lockdownd::LockdowndService;
-use std::os::raw::{c_void, c_char};
+use std::ffi::{c_void, c_char};
 
 struct NotifyCallback<'a> {
     pub callback: Box<dyn FnMut (String) + 'a>,

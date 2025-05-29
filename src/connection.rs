@@ -1,7 +1,7 @@
 // jkcoxson
 
 use std::marker::PhantomData;
-use std::os::raw::c_char;
+use std::ffi::c_char;
 
 use crate::bindings as unsafe_bindings;
 use crate::error::IdeviceError;

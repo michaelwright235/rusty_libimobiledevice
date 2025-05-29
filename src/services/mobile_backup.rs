@@ -1,9 +1,6 @@
 // jkcoxson
 
-use std::{
-    ffi::CString,
-    os::raw::{c_char, c_int},
-};
+use std::ffi::{CString, c_char, c_int};
 
 use plist_plus2::{from_pointer, Value};
 
@@ -596,7 +593,7 @@ pub struct MobileBackupRestoreFlags {
     pub preserve_camera_roll: bool,
 }
 
-impl From<MobileBackupRestoreFlags> for std::os::raw::c_uint {
+impl From<MobileBackupRestoreFlags> for std::ffi::c_uint {
     fn from(flags: MobileBackupRestoreFlags) -> Self {
         let mut mask = 0;
         if flags.notify_springboard {

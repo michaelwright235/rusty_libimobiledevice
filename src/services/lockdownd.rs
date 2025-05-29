@@ -1,7 +1,6 @@
 // jkcoxson
 
-use std::ffi::CString;
-use std::os::raw::c_char;
+use std::ffi::{CString, c_char};
 
 use crate::bindings as unsafe_bindings;
 use crate::error::LockdowndError;
