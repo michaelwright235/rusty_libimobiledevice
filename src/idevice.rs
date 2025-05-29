@@ -124,10 +124,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
 /// ***Verified:*** False
 pub fn get_device(udid: impl Into<String>) -> Result<Device, IdeviceError> {
     let udid = udid.into();
-    let devices = match get_devices() {
-        Ok(devices) => devices,
-        Err(e) => return Err(e),
-    };
+    let devices = get_devices()?;
     for device in devices {
         if device.get_udid() == udid {
             return Ok(device);
@@ -144,10 +141,7 @@ pub fn get_device(udid: impl Into<String>) -> Result<Device, IdeviceError> {
 ///
 /// ***Verified:*** False
 pub fn get_first_device() -> Result<Device, IdeviceError> {
-    let devices = match get_devices() {
-        Ok(devices) => devices,
-        Err(e) => return Err(e),
-    };
+    let devices = get_devices()?;
     if devices.is_empty() {
         return Err(error::IdeviceError::NoDevice);
     }

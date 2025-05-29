@@ -1,7 +1,5 @@
 // jkcoxson
 
-use bindgen;
-
 use std::{env, fs::canonicalize, path::PathBuf};
 
 fn main() {
@@ -291,7 +289,7 @@ fn repo_setup(url: &str) {
     cmd.arg("--depth=1");
     cmd.arg(url);
     cmd.output().unwrap();
-    env::set_current_dir(url.split('/').last().unwrap().replace(".git", "")).unwrap();
+    env::set_current_dir(url.split('/').next_back().unwrap().replace(".git", "")).unwrap();
     env::set_var("NOCONFIGURE", "1");
     let mut cmd = std::process::Command::new("./autogen.sh");
     let _ = cmd.output();

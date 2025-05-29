@@ -155,7 +155,7 @@ impl<'a> DebugServer<'a> {
         }
 
         Ok(
-            String::from_utf8(unsafe { std::slice::from_raw_parts(data, size as usize).to_vec() })
+            String::from_utf8(unsafe { std::slice::from_raw_parts(data, size).to_vec() })
                 .unwrap(),
         )
     }

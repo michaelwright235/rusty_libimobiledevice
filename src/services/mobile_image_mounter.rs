@@ -278,7 +278,7 @@ impl<'a> MobileImageMounter<'a> {
 
 extern "C" fn image_mounter_callback(a: *mut c_void, b: usize, c: *mut c_void) -> isize {
     trace!("image_mounter_callback called");
-    unsafe { libc::fread(a, 1, b as usize, c as *mut libc::FILE) as isize }
+    unsafe { libc::fread(a, 1, b, c as *mut libc::FILE) as isize }
 }
 
 impl Drop for MobileImageMounter<'_> {

@@ -126,15 +126,15 @@ impl<'a> InstProxyClient<'a> {
         let mut dict = unsafe { from_pointer(unsafe_bindings::instproxy_client_options_new()) }.into_dictionary().unwrap();
 
         for (key, value) in options {
-            dict.insert(&key.into(), value);
+            dict.insert(key.into(), value);
         }
 
         let mut return_attributes = Array::new();
         for i in args {
-            let t = PString::new(&i.into());
+            let t = PString::new(i.into());
             return_attributes.append(t);
         }
-        let _ = dict.insert("ReturnAttributes", return_attributes);
+        dict.insert("ReturnAttributes", return_attributes);
 
         dict.into()
     }
@@ -342,7 +342,7 @@ impl<'a> InstProxyClient<'a> {
     /// # Arguments
     /// * `app_id` - The bundle ID of the app to archive
     /// * `client_options` - The options for archive.
-    ///     Current known options for plist dictionaries are `SkipUninstall: bool` and `ArchiveType: "ApplicationOnly"`
+    ///   Current known options for plist dictionaries are `SkipUninstall: bool` and `ArchiveType: "ApplicationOnly"`
     /// # Returns
     /// *none*
     ///
