@@ -13,41 +13,11 @@ fn main() {
     //   BINDGEN GENERATION   //
     ////////////////////////////
 
-    if cfg!(feature = "pls-generate") {
-        // Get gnutls path per OS
-        let gnutls_path = match env::consts::OS {
-            "linux" => "/usr/include",
-            "macos" => "/opt/homebrew/include",
-            "windows" => {
-                panic!("Generating bindings on Windows is broken, pls remove the pls-generate feature.");
-            }
-            _ => panic!("Unsupported OS"),
-        };
-
-        let bindings = bindgen::Builder::default()
-            // The input header we would like to generate
-            // bindings for.
-            .header("wrapper.h")
-            // Include in clang build
-            .clang_arg(format!("-I{}", gnutls_path))
-            // Tell cargo to invalidate the built crate whenever any of the
-            // included header files changed.
-            .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
-            // Finish the builder and generate the bindings.
-            .generate()
-            // Unwrap the Result and panic on failure.
-            .expect("Unable to generate bindings");
-
-        // Write the bindings to the $OUT_DIR/bindings.rs file.
-        let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-        bindings
-            .write_to_file(out_path.join("bindings.rs"))
-            .expect("Couldn't write bindings!");
-    }
+    let cur_path = env::current_dir().unwrap();
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     if cfg!(feature = "vendored") {
         // Change current directory to OUT_DIR
-        let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
         env::set_current_dir(&out_path).unwrap();
         env::set_var("PKG_CONFIG_PATH", out_path.join("lib/pkgconfig"));
 
@@ -133,6 +103,7 @@ fn main() {
             panic!("\nopenssl-src was not found, exiting\n");
         }
 
+        env::set_current_dir(&out_path).unwrap();
         // Clone the vendored libraries
         repo_setup("https://github.com/libimobiledevice/libplist.git");
         repo_setup("https://github.com/libimobiledevice/libimobiledevice-glue.git");
@@ -262,6 +233,41 @@ fn main() {
     } else {
         "dylib"
     };
+
+    env::set_current_dir(&cur_path).unwrap();
+    if cfg!(feature = "pls-generate") {
+        // Get gnutls path per OS
+        let gnutls_path = match env::consts::OS {
+            "linux" => "/usr/include",
+            "macos" => "/opt/homebrew/include",
+            "windows" => {
+                panic!("Generating bindings on Windows is broken, pls remove the pls-generate feature.");
+            }
+            _ => panic!("Unsupported OS"),
+        };
+
+        let bindings = bindgen::Builder::default()
+            // The input header we would like to generate
+            // bindings for.
+            .header("wrapper.h")
+            // Include in clang build
+            .clang_arg(format!("-I{}", gnutls_path))
+            // Include an out dir, that contains a cloned repo
+            .clang_arg(format!("-I{}", out_path.as_os_str().to_str().unwrap()))
+            .clang_arg(format!("-I{}/libimobiledevice", out_path.as_os_str().to_str().unwrap()))
+            // Tell cargo to invalidate the built crate whenever any of the
+            // included header files changed.
+            .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
+            // Finish the builder and generate the bindings.
+            .generate()
+            // Unwrap the Result and panic on failure.
+            .expect("Unable to generate bindings");
+
+        // Write the bindings to the $OUT_DIR/bindings.rs file.
+        bindings
+            .write_to_file(out_path.join("bindings.rs"))
+            .expect("Couldn't write bindings!");
+    }
 
     // Link libi* deps
     println!(
