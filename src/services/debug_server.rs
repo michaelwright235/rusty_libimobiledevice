@@ -331,7 +331,7 @@ impl<'a> DebugServer<'a> {
     pub fn decode_string(buffer: impl Into<String>) -> String {
         let buffer = buffer.into();
         let mut decoded_buffer = unsafe { std::mem::zeroed() };
-        let buffer_len = buffer.len() as unsafe_bindings::size_t;
+        let buffer_len = buffer.len();
         let buffer_c_string = CString::new(buffer).unwrap();
         unsafe {
             unsafe_bindings::debugserver_decode_string(

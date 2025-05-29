@@ -3,7 +3,7 @@
 use std::{
     ffi::CString,
     io::Read,
-    os::raw::{c_char, c_long, c_ulong},
+    os::raw::c_char,
     path::PathBuf,
 };
 
@@ -150,9 +150,9 @@ impl<'a> MobileImageMounter<'a> {
             unsafe_bindings::mobile_image_mounter_upload_image(
                 self.pointer,
                 image_type_c_string_ptr,
-                dmg_size as c_ulong,
-                signature_buffer as *const c_char,
-                signature_size as u16,
+                dmg_size,
+                signature_buffer as *const std::os::raw::c_uchar,
+                signature_size as std::os::raw::c_uint,
                 Some(image_mounter_callback),
                 image_buffer as *mut c_void,
             )
@@ -226,8 +226,8 @@ impl<'a> MobileImageMounter<'a> {
             unsafe_bindings::mobile_image_mounter_mount_image(
                 self.pointer,
                 image_path.as_ptr() as *const c_char,
-                signature_buffer.as_ptr() as *const c_char,
-                signature_buffer.len() as u16,
+                signature_buffer.as_ptr() as *const std::os::raw::c_uchar,
+                signature_buffer.len() as std::os::raw::c_uint,
                 image_type_c_string_ptr,
                 &mut plist,
             )
@@ -277,9 +277,9 @@ impl<'a> MobileImageMounter<'a> {
     }
 }
 
-extern "C" fn image_mounter_callback(a: *mut c_void, b: c_ulong, c: *mut c_void) -> c_long {
+extern "C" fn image_mounter_callback(a: *mut c_void, b: usize, c: *mut c_void) -> isize {
     trace!("image_mounter_callback called");
-    unsafe { libc::fread(a, 1, b as usize, c as *mut libc::FILE) as c_long }
+    unsafe { libc::fread(a, 1, b as usize, c as *mut libc::FILE) as isize }
 }
 
 impl Drop for MobileImageMounter<'_> {
